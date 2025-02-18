@@ -32,19 +32,21 @@ class SimpleJEPA_Model(nn.Module):
 
 
         # Now create a decoder that will take the output of the predictor to generate the next frames
-        self.decoder = MovingMNSITJEPADecoder(in_channels=configs.embed_dim, image_size=(H, W))
+        self.decoder = MovingMNSITJEPADecoder(in_channels=configs.embed_dim, image_size=H)
 
 
     def forward(self, frames_tensor, latent_tensor, mask_true, **kwargs):
         # Get first 3 frames from the input'
         x = frames_tensor[:, :3]
         # Encode the frames
-        x = self.input_encoder(x)
-        x = self.predictor(x, latent_tensor)
+        hx = self.input_encoder(x)
+        hx = self.predictor(hx, latent_tensor)
 
         y = frames_tensor[:, 3:]
-        y = self.target_encoder(y)
+        hy = self.target_encoder(y)
 
-        # Calculate loss between x and y
+        y_hat = self.decoder(hy)
+
+        # Calculate all the losses
 
         return x

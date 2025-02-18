@@ -8,7 +8,7 @@ from .phydnet_modules import PhyCell, PhyD_ConvLSTM, PhyD_EncoderRNN, K2M
 from .predrnn_modules import SpatioTemporalLSTMCell
 from .predrnnpp_modules import CausalLSTMCell, GHU
 from .predrnnv2_modules import SpatioTemporalLSTMCellv2
-from .simple_jepa_modules import MovingMNISTJEPAEncoder, MovingMNISTJEPAPredictor
+from .simple_jepa_modules import MovingMNISTJEPAEncoder, MovingMNISTJEPAPredictor, MovingMNISTJEPADecoder
 from .simvp_modules import (BasicConv2d, ConvSC, GroupConv2d,
                             ConvNeXtSubBlock, ConvMixerSubBlock, GASubBlock, gInception_ST,
                             HorNetSubBlock, MLPMixerSubBlock, MogaSubBlock, PoolFormerSubBlock,
@@ -27,7 +27,7 @@ __all__ = [
     'SwinSubBlock', 'UniformerSubBlock', 'VANSubBlock', 'ViTSubBlock', 'TAUSubBlock',
     'ResBlock', 'RRDB', 'ResidualDenseBlock_4C', 'Up', 'Conv3D', 'ConvLayer',
     'MatrixPredictor3DConv', 'SimpleMatrixPredictor3DConv_direct', 'PredictModel',
-    'UpSample', 'DownSample', 'STconvert', 'MovingMNISTJEPAEncoder', 'MovingMNISTJEPAPredictor'
+    'UpSample', 'DownSample', 'STconvert', 'MovingMNISTJEPAEncoder', 'MovingMNISTJEPAPredictor', 'MovingMNISTJEPADecoder'
     
     
 ]
