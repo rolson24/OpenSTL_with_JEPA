@@ -12,6 +12,7 @@ from .visualization import (show_video_line, show_video_gif_multiple, show_video
 
 from .callbacks import SetupCallback, EpochEndCallback, BestCheckpointCallback
 from .mmvp_utils import build_similarity_matrix, sim_matrix_postprocess, sim_matrix_interpolate, cum_multiply
+from .ISTA import ISTA
 
 
 __all__ = [
@@ -24,5 +25,6 @@ __all__ = [
     'show_video_line', 'show_video_gif_multiple', 'show_video_gif_single', 'show_heatmap_on_image',
     'show_taxibj', 'show_weather_bench',
     'SetupCallback', 'EpochEndCallback', 'BestCheckpointCallback',
-    'build_similarity_matrix', 'sim_matrix_postprocess', 'sim_matrix_interpolate', 'cum_multiply'    
+    'build_similarity_matrix', 'sim_matrix_postprocess', 'sim_matrix_interpolate', 'cum_multiply',
+    'ISTA'
 ]

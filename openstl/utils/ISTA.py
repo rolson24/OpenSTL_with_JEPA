@@ -5,46 +5,43 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# Loss term for l_vcr
-def l_vcr(h):
-    # h is a tensor of shape (B, T, d)
-    B, T, d = h.shape
-    # First we compute the varaiance term
-    # 1/(T*d) * sum_t sum_i max(0, thresh - sqrt(Var(H_t_i + epsilon)))
-    epsilon = 1e-6
-    thresh = 1
-    mean_h = torch.mean(h, dim=)
+
+
 
 
 # Loss function for the ISTA algorithm
-def loss_f(Zs, predictor, hx, hy, sparsity_reg, variance_reg, decoder, y, train_decoder):
-    # First we compute the hinge loss term
-    # 1/(T*d) * sum_t sum_i max(0, thresh - sqrt(Var(Hy_t_i + epsilon)))
-    B, T_out, d = hy.shape
-    T_in = hx.shape[1] # Number of input frames
-    epsilon = 1e-6
+def loss_f(Zs, predictor, hx, hy, train_decoder=False, decoder=None, y=None):
+    """
+    Args:
+        Zs: the latent codes
+        predictor: the predictor network
+        hx: the hidden state from the encoder
+        hy: the target vector
+        train_decoder: whether to train the decoder
+        decoder: the decoder network (required if train_decoder is True)
+        y: the target frames (required if train_decoder is True)
+    """
+
+    # Compute the prediction error
+    # print("hx",hx.shape)
+    # print("Zs",Zs.shape)
+    h_pred = predictor(hx, Zs)
+    error = torch.mean((h_pred - hy)**2)
+
+    if train_decoder:
+        # Compute the reconstruction error
+        y_pred = decoder(h_pred)
+        reconstruction_error = torch.mean((y_pred - y)**2)
+    else:
+        reconstruction_error = 0
     
-    # Variance of the predicted frames is computed as follows:
-    mean_hy = torch.mean(hy, dim=0)  # Take the mean over the batch dimension so that we get a tensor of shape (T_out, d)
-    var_hy = torch.mean((hy - mean_hy)**2, dim=0)  # Take the mean over the batch dimension so that we get a tensor of shape (T_out, d)
-    var_hy = torch.sqrt(var_hy + epsilon)  # Take the square root to get the standard deviation
 
-    # Compute the hinge loss
-    thresh = 1
-    hinge_loss = torch.max(thresh - var_hy, torch.zeros_like(var_hy))
-    hinge_loss = torch.sum(hinge_loss) / (T_out * d)
+    output = {'error': error, 'reconstruction_error': reconstruction_error, 'hy_hat': h_pred}
+    return output
 
-    # Next we compute the covariance term:
-    # It sums the squares of the non-diagonal elements of the covariance matrix of the predicted frames.
-    # A single frames covariance matrix is computed as follows:
-    # N = B*d
-    # cov(Hy_t) = 1/(N - 1) sum_n (Hy_t_n - mean(Hy_t)) (Hy_t_n - mean(Hy_t))^T
-    frame_means = torch.mean(hy, dim=(0,2))  # shape: (T_out)
-    # The covariance term is then computed as follows:
-    # 1/(T*d) * sum_t sum_(i/=j) (cov(Hy_t:))|^2_(i,j)
 
 # The ISTA algorithm is a simple iterative algorithm for solving the LASSO problem.
-def ISTA(predictor, hy, hx, sparsity_reg, n_steps_inf, lrt_z, variance_reg, tolerance, hinge, FISTA=False, train_decoder=False, decoder=None, y=None,decoder_opt=None):
+def ISTA(predictor, hy, hx, sparsity_reg, n_steps_inf, lrt_z, tolerance, Zs_dim, FISTA=False, train_decoder=False, decoder=None, y=None,decoder_opt=None):
     """
     Args:
         predictor: the predictor network
@@ -53,9 +50,7 @@ def ISTA(predictor, hy, hx, sparsity_reg, n_steps_inf, lrt_z, variance_reg, tole
         sparsity_reg: the sparsity regularization parameter
         n_steps_inf: the number of steps to run the inference for
         lrt_z: the learning rate for the z variable
-        variance_reg: the variance regularization parameter
         tolerance: the early stopping tolerance
-        hinge: whether to use the hinge loss
         FISTA: whether to use the FISTA algorithm
         training_decoder: whether to train the decoder
         decoder: the decoder network (optional)
@@ -67,14 +62,15 @@ def ISTA(predictor, hy, hx, sparsity_reg, n_steps_inf, lrt_z, variance_reg, tole
     T_out = hy.shape[1]
     out_channels = hy.shape[2]
     out_frames = hy.shape[1]
-    latent_dim = 20
+    latent_dim = Zs_dim
 
     # Turn off gradients for the predictor
     predictor.requires_grad_(False)
     predictor.eval()
 
-    # Generate codes (initially zeros)
-    Zs = nn.Parameter(torch.zeros(B, latent_dim))
+    # Generate codes (initially random)
+    # Zs = nn.Parameter(torch.zeros(B, latent_dim))
+    Zs = nn.Parameter(torch.randn(B, latent_dim))
     Zs.requires_grad_(True)
 
     if FISTA:
@@ -88,4 +84,109 @@ def ISTA(predictor, hy, hx, sparsity_reg, n_steps_inf, lrt_z, variance_reg, tole
     # Inference loop
     for step in range(n_steps_inf):
         trainable_parameters = aux if FISTA else Zs
-        loss_dict = loss_f(trainable_parameters, predictor, hx, hy, sparsity_reg, variance_reg, decoder, y, train_decoder)
+        loss_dict = loss_f(trainable_parameters, predictor, hx, hy, train_decoder=False, decoder=decoder, y=y)
+        error = loss_dict['error']
+        reconstruction_error = loss_dict['reconstruction_error']
+
+        # Gradient computation
+        trainable_parameters.grad = None
+        error.backward()
+
+        # print("Zs grad",Zs.grad)
+        # print("trainable_parameters grad",trainable_parameters.grad)
+
+        # Keep track of old values for FISTA
+        Zs_old = Zs.clone().detach()
+        # print("Old Zs",Zs_old)
+
+        # Gradient and shrinkage step
+        Zs = ISTA_step(x=trainable_parameters, alpha=sparsity_reg, step_size=lrt_z, stop_early=stop_early_dummies, positive=True)
+        # print("New Zs",Zs)
+
+        # FISTA
+        if FISTA:
+            t_new = 0.5 * (1 + np.sqrt(1 + 4 * t_old**2))
+            aux = nn.Parameter(Zs.detach() + (t_old - 1) / t_new * (Zs.detach() - Zs_old))
+            t_old = t_new
+        
+        # Early stopping
+        stop_early_dummies = stop_early(Zs_old, Zs.detach(), tolerance)
+        # print("stop_early_dummies",stop_early_dummies)
+
+        # Stop early if all elements are below the tolerance
+        stop_early_step += 1 - stop_early_dummies
+        if step < n_steps_inf - 1 and torch.sum(stop_early_dummies) == B:
+            break
+
+    # Count num of total steps
+    Zs_steps_mean = torch.mean(stop_early_step)
+
+    # Remove gradients
+    Zs = Zs.detach()
+    Zs.requires_grad_(False)
+
+    # Train the decoder
+    if train_decoder:
+        decoder_opt.zero_grad()
+        loss_dict = loss_f(Zs, predictor, hx, hy, train_decoder=True, decoder=decoder, y=y)
+        loss = loss_dict['reconstruction_error']
+        loss.backward()
+        decoder_opt.step()
+
+    output = {'Zs': Zs, 'Zs_steps_mean': Zs_steps_mean, 'error': error, 'reconstruction_error': reconstruction_error}
+    return output
+
+
+def ISTA_step(x, alpha, step_size, stop_early, positive=False):
+    """
+    Args:
+        x: the input tensor
+        alpha: the regularization parameter
+        step_size: the step size
+        stop_early: whether to stop early
+        positive: whether to enforce positivity
+    """
+
+    z_prox = x.clone().detach()
+    # ISTA gradient step followed by shrinkage
+    with torch.no_grad():
+        z_prox.data = soft_treshold(x.detach() - (1 - stop_early) * step_size * x.grad.data,
+                                    threshold=(1 - stop_early) * alpha * step_size, positive=positive)
+    
+    return nn.Parameter(z_prox)
+
+def soft_treshold(x, threshold, positive=True):
+    """
+    Function that shirnks the input tensor by a threshold value
+    Args:
+        x: the input tensor
+        threshold: the threshold value
+        positive: whether to enforce positivity
+    """
+    result = x.sign() * F.relu(x.abs() - threshold, inplace=True)
+    # print("result",result)
+    if positive:
+        result = F.relu(result, inplace=True)
+    return result
+
+def stop_early(z_old, z_new, tolerance):
+    """
+    Function that stops the optimization early if the difference between the old and new values is below a certain tolerance
+    Args:
+        x_old: the old tensor
+        x_new: the new tensor
+        tolerance: the tolerance value
+    """
+    if tolerance == 0:
+        shape = (z_old.shape[0], 1) if len(z_old.shape) == 2 else (z_old.shape[0], 1, 1, 1)
+        # print("shape",shape)
+        return torch.zeros(shape, device=z_old.device)
+    with torch.no_grad():
+        code_dim = 1 if len(z_old.shape) == 2 else (1, 2, 3)
+        diff = torch.norm(z_old - z_new, p=2, dim=code_dim) / torch.norm(z_old, p=2, dim=code_dim)
+        # print("diff",diff)
+        if len(z_old.shape) == 2:
+            diff = diff.unsqueeze(1)
+            return (diff < tolerance).float()
+        else:
+            return (diff < tolerance).float().unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)

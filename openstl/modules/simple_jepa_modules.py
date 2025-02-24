@@ -1,20 +1,13 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from openstl.utils import ISTA
 
 # This is the encoder module for a Joint Embedding Prediction Architecture (JEPA) model
 # Description:
 # In experiments with MovingMNIST, we model the encoder as a 5-layer convolutional neural network with
 # batch norm and ReLU activation function at each layer. It has 3 spatial and 2 temporal convolutions followed
 # by an average pooling layer.
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 
 class MovingMNISTJEPAEncoder(nn.Module):
     def __init__(self, in_channels=3):
@@ -229,3 +222,26 @@ if __name__ == "__main__":
     input_tensor = torch.randn(1, 12, 1024)  # Batch size 1, 12 frames, 1024 channels
     output = decoder(input_tensor)
     print(output.shape)
+
+    # Test ISTA with a dummy example
+    input_tensor = torch.randn(1, 3, 1024)  # Batch size 1, 3 frames, 1024 channels
+    output_tensor = torch.randn(1, 12, 1024)  # Batch size 1, 12 frames, 1024 channels
+    predictor = MovingMNISTJEPAPredictor(latent_vector_mode=2, latent_vector_size=20)
+    decoder = MovingMNISTJEPADecoder()
+    sparsity = 0.2 # Low latent sparsity for testing
+    n_steps_inf = 50
+    lrt_z = 0.1 # High learning rate for testing
+    stopping_tolerance = 1e-6
+    # Test without training the decoder
+    output = ISTA(predictor, output_tensor, input_tensor, sparsity, n_steps_inf, lrt_z, stopping_tolerance, Zs_dim=20, FISTA=False)
+    print(f"Zs: {output['Zs']}")
+    print(f"error: {output['error']}")
+
+
+    # Test with training the decoder
+    output_frames = torch.randn(1, 12, 3, 64, 64)  # Batch size 1, 12 frames, 3 channels, 64x64 resolution
+    decoder_opt = torch.optim.Adam(decoder.parameters(), lr=0.001)
+    output = ISTA(predictor, output_tensor, input_tensor, sparsity, n_steps_inf, lrt_z, stopping_tolerance, Zs_dim=20, FISTA=False, train_decoder=True, decoder=decoder, y=output_frames, decoder_opt=decoder_opt)
+    print(f"Zs: {output['Zs']}")
+    print(f"error: {output['error']}")
+
