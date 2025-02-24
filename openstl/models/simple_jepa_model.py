@@ -6,6 +6,53 @@ from openstl.modules import MovingMNISTJEPAEncoder, MovingMNISTJEPAPredictor, Mo
 from openstl.utils.ISTA import ISTA
 
 # Loss term for l_vcr (from VJ-VCR Paper by K. Drozdov et al.)
+# def l_vcr(h, alpha, beta):
+#     """
+#     Args:
+#         h: the hidden state tensor of shape (B, T, d)
+#         alpha: the weight of the variance term
+#         beta: the weight of the covariance term
+#     """
+#     # h is a tensor of shape (B, T, d)
+#     B, T, d = h.shape
+#     # First we compute the varaiance term
+#     # 1/(T*d) * sum_t sum_i max(0, thresh - sqrt(Var(H_t_i + epsilon)))
+#     epsilon = 1e-6
+#     thresh = 1
+#     mean_h = torch.mean(h, dim=0) # Take the mean over the batch dimension so that we get a tensor of shape (T, d)
+#     var_h = torch.mean((h - mean_h)**2, dim=0) # Take the mean over the batch dimension so that we get a tensor of shape (T, d)
+#     var_h = torch.sqrt(var_h + epsilon) # Take the square root to get the standard deviation
+#     var_term = torch.max(thresh - var_h, torch.zeros_like(var_h))
+#     var_term = torch.sum(var_term) / (T * d)
+
+#     # Next we compute the covariance term
+#     # It sums the squares of the non-diagonal elements of the covariance matrix of the frames
+#     # A single frames covariance matrix is computed as follows:
+#     # cov(H_t) = 1/(B - 1) sum_n (H_t_n - mean(H_t)) (H_t_n - mean(H_t))^T
+#     frame_means = torch.mean(h, dim=(0)) # shape: (T, d)
+#     print("frame_means shape:", frame_means.shape)
+#     # print("h shape:", h.shape)
+#     # frame_div = h - frame_means.unsqueeze(0) # shape: (B, T, d)
+#     # print("frame_div shape:", frame_div.shape)
+#     # frame_covs = 1/(B - 1) * torch.einsum('btd,btd->td', frame_div, frame_div) # shape: (T, d, d)
+#     # print("frame_covs shape:", frame_covs.shape)
+#     # # The covariance term is then computed as follows:
+#     # # 1/(T*d) * sum_t sum_(i/=j) (cov(H_t))|^2_(i,j)
+#     # # So basically we sum over each frame and for each frame we sum all of th
+
+
+#     frame_div = h - frame_means.unsqueeze(0) # shape: (B, T, d)
+#     print("frame_div shape:", frame_div.shape)
+#     frame_covs = frame_div.permute(1, 2, 0) @ frame_div.permute(1, 0, 2) # shape: (T, d, d)
+#     print("frame_covs shape:", frame_covs.shape)
+#     # Now we square the non-diagonal elements
+#     diag_mask = torch.eye(x.size(-1), dtype=torch.bool).bool()
+#     diag_mask = diag_mask.unsqueeze(0).expand(x.size(0), -1, -1)
+#     offdiag_squared = frame_covs[~diag_mask].pow(2) + frame_covs[diag_mask]
+
+#     return alpha*var_term + beta*cov_term
+
+
 def l_vcr(h, alpha, beta):
     """
     Args:
@@ -13,28 +60,43 @@ def l_vcr(h, alpha, beta):
         alpha: the weight of the variance term
         beta: the weight of the covariance term
     """
-    # h is a tensor of shape (B, T, d)
     B, T, d = h.shape
     # First we compute the varaiance term
-    # 1/(T*d) * sum_t sum_i max(0, thresh - sqrt(Var(H_t_i + epsilon)))
-    epsilon = 1e-6
-    thresh = 1
-    mean_h = torch.mean(h, dim=0) # Take the mean over the batch dimension so that we get a tensor of shape (T, d)
-    var_h = torch.mean((h - mean_h)**2, dim=0) # Take the mean over the batch dimension so that we get a tensor of shape (T, d)
-    var_h = torch.sqrt(var_h + epsilon) # Take the square root to get the standard deviation
-    var_term = torch.max(thresh - var_h, torch.zeros_like(var_h))
-    var_term = torch.sum(var_term) / (T * d)
+    var = torch.var(h, dim=0, unbiased=True) # shape: (T, d)
 
-    # Next we compute the covariance term
-    # It sums the squares of the non-diagonal elements of the covariance matrix of the frames
-    # A single frames covariance matrix is computed as follows:
-    # N = B*d
-    # cov(H_t) = 1/(N - 1) sum_n (H_t_n - mean(H_t)) (H_t_n - mean(H_t))^T
-    frame_means = torch.mean(h, dim=(0,2)) # shape: (T)
-    frame_covs = 1/(B*d - 1) * torch.einsum('btd,btd->td', h - frame_means, h - frame_means) # shape: (T, d, d)
-    # The covariance term is then computed as follows:
-    # 1/(T*d) * sum_t sum_(i/=j) (cov(H_t))|^2_(i,j)
-    cov_term = torch.sum((frame_covs * (1 - torch.eye(d, device=frame_covs.device)).unsqueeze(0))**2) / (T * d)
+    # Compute the std deviation
+    std = torch.sqrt(var + 1e-6)
+
+    # Apply the hinge loss
+    var_term = torch.clamp(1 - std, min=0).mean()
+
+    # # Next we compute the covariance term
+    # cov_loss = 0.0
+    # for t in range(T):
+    #     # H_t has shape (B, d) for each t
+    #     H_t = h[:, t]
+    #     # Compute the mean over the batch dimension
+    #     mean_H_t = torch.mean(H_t, dim=0)
+    #     # Center the data
+    #     H_t_centered = H_t - mean_H_t
+    #     # Compute the covariance matrix: shape (d, d)
+    #     cov_t = (H_t_centered.T @ H_t_centered) / (B - 1)
+    #     # Zero out the diagonal so we only get the off-diagonal elements
+    #     cov_t = cov_t - torch.diag(torch.diag(cov_t))
+    #     # Compute the squared off-diagonal elements
+    #     cov_loss += torch.sum(cov_t**2).sum() / d
+    
+    # cov_term = cov_loss / T
+
+    # Compute the covariance term (vectorized)
+    mean_t = h.mean(dim=0, keepdim=True) # shape: (1, T, d)
+    h_centered = h - mean_t
+    h_centered = h_centered.permute(1, 0, 2) # shape: (T, B, d)
+    # Compute the covariance matrix for each frame
+    cov = torch.bmm(h_centered.transpose(1, 2), h_centered) / (B - 1) # shape: (T, d, d)
+    # Zero out the diagonal
+    mask = 1 - torch.eye(d, device=h.device).unsqueeze(0) # shape: (1, d, d)
+    cov_term = ((cov * mask) ** 2).sum() / (T * d)
 
     return alpha*var_term + beta*cov_term
 
@@ -46,19 +108,19 @@ class SimpleJEPA_Model(nn.Module):
     """
     def __init__(self, configs, **kwargs):
         super(SimpleJEPA_Model, self).__init__()
-        T, C, H, W = configs.in_shape
+        T, C, H, W = configs['in_shape']
 
         self.configs = configs
 
-        self.latent_tensor_mode = configs.latent_tensor_mode
-        self.latent_tensor_size = configs.latent_tensor_size
+        self.latent_tensor_mode = configs['latent_tensor_mode']
+        self.latent_tensor_size = configs['latent_tensor_size']
 
-        self.input_encoder = MovingMNISTJEPAEncoder(in_channels=C, out_channels=configs.embed_dim)
+        self.input_encoder = MovingMNISTJEPAEncoder(in_channels=C, out_channels=configs['embed_dim'])
 
-        self.predictor = MovingMNISTJEPAPredictor(in_channels=configs.embed_dim, out_channels=configs.embed_dim, latent_vector_mode=self.latent_tensor_mode, latent_vector_size=self.latent_tensor_size)
+        self.predictor = MovingMNISTJEPAPredictor(in_channels=configs['embed_dim'], out_channels=configs['embed_dim'], latent_vector_mode=self.latent_tensor_mode, latent_vector_size=self.latent_tensor_size)
 
         # Now create the target encoder that has a momentum average of the weights of the input encoder
-        self.target_encoder = MovingMNISTJEPAEncoder(in_channels=C, out_channels=configs.embed_dim)
+        self.target_encoder = MovingMNISTJEPAEncoder(in_channels=C, out_channels=configs['embed_dim'])
         # Copy the weights of the input encoder to the target encoder
         self.target_encoder.load_state_dict(self.input_encoder.state_dict())
         # Make the target encoder not trainable
@@ -67,60 +129,85 @@ class SimpleJEPA_Model(nn.Module):
         # How to update the target encoder
         self.target_encoder_update_rate = 0.999
 
-        if configs.train_decoder:
+        if configs['train_decoder']:
             # Now create a decoder that will take the output of the predictor to generate the next frames
-            self.decoder = MovingMNISTJEPADecoder(in_channels=configs.embed_dim, image_size=H)
-            self.decoder_opt = torch.optim.Adam(self.decoder.parameters(), lr=configs.lrt_decoder)
+            self.decoder = MovingMNISTJEPADecoder(in_channels=configs['embed_dim'], image_size=H)
+            self.decoder_opt = torch.optim.Adam(self.decoder.parameters(), lr=configs['lrt_decoder'])
         else:
             self.decoder = None
 
 
 
 
-    def forward(self, frames_tensor, latent_tensor, mask_true, **kwargs):
+    def forward(self, frames_tensor, latent_tensor, **kwargs):
         # Get first 3 frames from the input'
         x = frames_tensor[:, :3]
+        print("x shape:", x.shape)
         # Encode the input frames
         hx = self.input_encoder(x)
 
         # Encode the target frames
         y = frames_tensor[:, 3:]
+        print("y shape:", y.shape)
         hy = self.target_encoder(y)
 
+        # Run the ISTA algorithm to get the latent tensor
+        if self.latent_tensor_mode == 2:
+            # This trains the decoder as well (probably doesn't make sense to do this, but oh well)
+            ISTA_output = ISTA(self.predictor, hy, hx, self.configs['sparsity_reg'], self.configs['n_steps_inf'], self.configs['lrt_z'], self.configs['tolerance'], self.latent_tensor_size, FISTA=False)
+            latent_tensor = ISTA_output['Zs']
 
         # Predict the next frames with the latent tensor
-        if self.latent_tensor_mode == 'ISTA':
-            # This trains the decoder as well (probably doesn't make sense to do this, but oh well)
-            latent_tensor = ISTA(self.predictor, hx, latent_tensor, self.configs.sparsity_reg, self.configs.n_steps_inf, self.configs.lrt_z, self.configs.tolerance, self.latent_tensor_size, self.configs.FISTA, self.configs.train_decoder, self.decoder, y, self.decoder_opt)
-        
         hy_hat = self.predictor(hx, latent_tensor)
-
-
 
         # Calculate all the losses
         h_full = torch.cat([hx, hy_hat], dim=1) # Concatenate the hidden states along the time dimension
-        l_vcr_term = l_vcr(h_full, self.configs.alpha, self.configs.beta)
+
+        # Compute the l_vcr term
+        l_vcr_term = l_vcr(h_full, self.configs['alpha'], self.configs['beta'])
 
         # Compute the prediction error
         prediction_error = torch.mean((hy_hat - hy)**2)
 
-        total_loss = prediction_error + l_vcr_term
+        # Compute the reconstruction error
+        if self.configs['train_decoder']:
+            y_pred = self.decoder(hy_hat)
+            reconstruction_error = torch.mean((y_pred - y)**2)
+        else:
+            y_pred = y
+            reconstruction_error = 0
 
-        # Need to modify to compute the decoder outside of ISTA
-        next_frames = None
-        return next_frames, total_loss
+        # Compute the total loss
+        total_loss = prediction_error + l_vcr_term + reconstruction_error
+
+
+        return y_pred, total_loss
 
 
 # Test that the model runs
 if __name__ == "__main__":
     # Create a simple model
-    model = SimpleJEPA_Model(configs=None)
+    configs = {
+        'in_shape': (15, 1, 64, 64), # (T, C, H, W)
+        'embed_dim': 64,
+        'latent_tensor_mode': 2, # ISTA
+        'latent_tensor_size': 20,
+        'sparsity_reg': 0.2, # Sparsity regularization parameter from paper 
+        'n_steps_inf': 10,
+        'lrt_z': 1,
+        'tolerance': 1e-6,
+        'alpha': 0.1,
+        'beta': 0.1,
+        'train_decoder': True,
+        'lrt_decoder': 0.01
+    }
+    model = SimpleJEPA_Model(configs=configs)
     # Create some dummy data
-    frames_tensor = torch.randn(2, 5, 1, 64, 64)
-    latent_tensor = torch.randn(2, 64)
-    mask_true = torch.randn(2, 5, 1, 64, 64)
+    frames_tensor = torch.randn(2, 15, 1, 64, 64) # (B, T, C, H, W)
+    latent_tensor = torch.randn(2, 20) # (B, latent_tensor_size) Doesn't matter what the size is for mode 2
+    # mask_true = torch.randn(2, 5, 1, 64, 64)
     # Run the model
-    next_frames, total_loss = model(frames_tensor, latent_tensor, mask_true)
+    next_frames, total_loss = model(frames_tensor, latent_tensor)
     print("Next frames shape:", next_frames.shape)
     print("Total loss:", total_loss)
     print("Model ran successfully!")

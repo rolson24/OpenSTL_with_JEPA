@@ -10,10 +10,11 @@ from openstl.utils import ISTA
 # by an average pooling layer.
 
 class MovingMNISTJEPAEncoder(nn.Module):
-    def __init__(self, in_channels=3):
+    def __init__(self, in_channels=3, out_channels=1024):
         super(MovingMNISTJEPAEncoder, self).__init__()
         self.in_channels = in_channels
         self.spatial_output_channels = 256
+        self.out_channels = out_channels
         
         # 3 spatial convolutions
         self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=64, kernel_size=3, padding=1)
@@ -29,8 +30,8 @@ class MovingMNISTJEPAEncoder(nn.Module):
         self.conv4 = nn.Conv1d(in_channels=self.spatial_output_channels, out_channels=512, kernel_size=3, padding=1)
         self.bn4 = nn.BatchNorm1d(512)
 
-        self.conv5 = nn.Conv1d(in_channels=512, out_channels=1024, kernel_size=3, padding=1)
-        self.bn5 = nn.BatchNorm1d(1024)
+        self.conv5 = nn.Conv1d(in_channels=512, out_channels=self.out_channels, kernel_size=3, padding=1)
+        self.bn5 = nn.BatchNorm1d(self.out_channels)
         
         # Note: we use adaptive_avg_pool2d to pool over spatial dims.
         # The provided AdaptiveAvgPool3d could be used if you reshape appropriately,
@@ -42,7 +43,7 @@ class MovingMNISTJEPAEncoder(nn.Module):
         
         # Process each frame separately using 2D convolutions:
         # Combine batch and time dimensions for spatial processing
-        x = x.view(B * T, C, H, W)  # shape: (B*T, C, H, W)
+        x = x.reshape(B * T, C, H, W)  # shape: (B*T, C, H, W)
         
         # Spatial convolutional layers with ReLU activations
         x = F.relu(self.bn1(self.conv1(x)))  # (B*T, 64, H, W)
@@ -124,7 +125,7 @@ class MovingMNISTJEPAPredictor(nn.Module):
 
         B, T_in, d = hx.shape
         # Flatten hx by concatenating the features of the input frames.
-        hx_flat = hx.view(B, T_in * d)  # shape: (B, T_in*d)
+        hx_flat = hx.reshape(B, T_in * d)  # shape: (B, T_in*d)
         
         h = F.relu(self.fc1(hx_flat))
         h = F.relu(self.fc2(h))
@@ -152,13 +153,14 @@ class MovingMNISTJEPAPredictor(nn.Module):
 
 # Create a decoder module that can decode the output of the predictor
 class MovingMNISTJEPADecoder(nn.Module):
-    def __init__(self, out_channels=3, image_size=64):
+    def __init__(self, in_channels=1024, out_channels=3, image_size=64):
         super(MovingMNISTJEPADecoder, self).__init__()
+        self.in_channels = in_channels
         self.out_channels = out_channels
         self.image_size = image_size
         
         # Reverse of temporal conv (1D) layers
-        self.convT4 = nn.ConvTranspose1d(in_channels=1024, out_channels=512, kernel_size=3, padding=1)
+        self.convT4 = nn.ConvTranspose1d(in_channels=self.in_channels, out_channels=512, kernel_size=3, padding=1)
         self.bn4 = nn.BatchNorm1d(512)
         
         self.convT5 = nn.ConvTranspose1d(in_channels=512, out_channels=256, kernel_size=3, padding=1)
@@ -184,7 +186,7 @@ class MovingMNISTJEPADecoder(nn.Module):
         x = x.transpose(1, 2)  # (B, T, 256)
         
         # Flatten (B, T) => (B*T, ...)
-        x = x.view(B * T, 256, 1, 1)  # (B*T, 256, 1, 1)
+        x = x.reshape(B * T, 256, 1, 1)  # (B*T, 256, 1, 1)
 
         # Adjust if you upsample differently (e.g., via stride or interpolate)
         # Here we assume final 64x64 output frames:
@@ -199,9 +201,6 @@ class MovingMNISTJEPADecoder(nn.Module):
         x = x.view(B, T, self.out_channels, self.image_size, self.image_size)
         
         return x
-
-
-
 
 
 
@@ -241,7 +240,7 @@ if __name__ == "__main__":
     # Test with training the decoder
     output_frames = torch.randn(1, 12, 3, 64, 64)  # Batch size 1, 12 frames, 3 channels, 64x64 resolution
     decoder_opt = torch.optim.Adam(decoder.parameters(), lr=0.001)
-    output = ISTA(predictor, output_tensor, input_tensor, sparsity, n_steps_inf, lrt_z, stopping_tolerance, Zs_dim=20, FISTA=False, train_decoder=True, decoder=decoder, y=output_frames, decoder_opt=decoder_opt)
+    output = ISTA(predictor, output_tensor, input_tensor, sparsity, n_steps_inf, lrt_z, stopping_tolerance, Zs_dim=20, FISTA=False)
     print(f"Zs: {output['Zs']}")
     print(f"error: {output['error']}")
 

@@ -13,54 +13,38 @@ class Simple_MNIST_JEPA(Base_method):
 
     def __init__(self, **args):
         super().__init__(**args)
-        self.eta = 1.0
+        self.constraints = self._get_constraints()
 
     def _build_model(self, **args):
-        # num_hidden = [int(x) for x in self.hparams.num_hidden.split(',')]
-        # num_layers = len(num_hidden)
-        # return SimpleJEPA_Model(num_layers, num_hidden, self.hparams)
         return SimpleJEPA_Model(self.hparams)
 
+    def _get_constraints(self):
+        constraints = torch.zeros((49, 7, 7))
+        ind = 0
+        for i in range(0, 7):
+            for j in range(0, 7):
+                constraints[ind,i,j] = 1
+                ind +=1
+        return constraints 
+
     def forward(self, batch_x, batch_y, **kwargs):
-        # reverse schedule sampling
-        if self.hparams.reverse_scheduled_sampling == 1:
-            mask_input = 1
+        # If there is a decoder, it should be called here
+        if self.hparams.train_decoder:
+            pred_y, _ = self.model(batch_x, batch_y, self.constraints, return_loss=False)
         else:
-            mask_input = self.hparams.pre_seq_length
-        _, img_channel, img_height, img_width = self.hparams.in_shape
-
-        # preprocess
-        test_ims = torch.cat([batch_x, batch_y], dim=1).permute(0, 1, 3, 4, 2).contiguous()
-        test_dat = reshape_patch(test_ims, self.hparams.patch_size)
-        test_ims = test_ims[:, :, :, :, :img_channel]
-
-        real_input_flag = torch.zeros(
-            (batch_x.shape[0],
-            self.hparams.total_length - mask_input - 1,
-            img_height // self.hparams.patch_size,
-            img_width // self.hparams.patch_size,
-            self.hparams.patch_size ** 2 * img_channel)).to(self.device)
-            
-        if self.hparams.reverse_scheduled_sampling == 1:
-            real_input_flag[:, :self.hparams.pre_seq_length - 1, :, :] = 1.0
-
-        img_gen, _ = self.model(test_dat, real_input_flag, return_loss=False)
-        img_gen = reshape_patch_back(img_gen, self.hparams.patch_size)
-        pred_y = img_gen[:, -self.hparams.aft_seq_length:].permute(0, 1, 4, 2, 3).contiguous()
+            pred_y = batch_y
         return pred_y
     
     def training_step(self, batch, batch_idx):
         batch_x, batch_y = batch
-        ims = torch.cat([batch_x, batch_y], dim=1).permute(0, 1, 3, 4, 2).contiguous()
-        ims = reshape_patch(ims, self.hparams.patch_size)
-
-        if self.hparams.reverse_scheduled_sampling == 1:
-            real_input_flag = reserve_schedule_sampling_exp(
-                self.global_step, ims.shape[0], self.hparams)
+        # Concatenate the input and output tensors
+        ims = torch.cat([batch_x, batch_y], dim=1).contiguous()
+        if self.hparams.latent_tensor_mode == 2:
+            pred_y, loss = self.model(ims, None)
         else:
-            self.eta, real_input_flag = schedule_sampling(
-                self.eta, self.global_step, ims.shape[0], self.hparams)
-            
-        img_gen, loss = self.model(ims, real_input_flag)
+            # Extract the latent tensor from the batch tensor
+            latent_tensor = batch_x[:, 0]
+            pred_y, loss = self.model(ims, latent_tensor)
+
         self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True)
         return loss

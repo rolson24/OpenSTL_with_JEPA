@@ -10,16 +10,13 @@ import torch.nn.functional as F
 
 
 # Loss function for the ISTA algorithm
-def loss_f(Zs, predictor, hx, hy, train_decoder=False, decoder=None, y=None):
+def loss_f(Zs, predictor, hx, hy):
     """
     Args:
         Zs: the latent codes
         predictor: the predictor network
         hx: the hidden state from the encoder
         hy: the target vector
-        train_decoder: whether to train the decoder
-        decoder: the decoder network (required if train_decoder is True)
-        y: the target frames (required if train_decoder is True)
     """
 
     # Compute the prediction error
@@ -28,20 +25,20 @@ def loss_f(Zs, predictor, hx, hy, train_decoder=False, decoder=None, y=None):
     h_pred = predictor(hx, Zs)
     error = torch.mean((h_pred - hy)**2)
 
-    if train_decoder:
-        # Compute the reconstruction error
-        y_pred = decoder(h_pred)
-        reconstruction_error = torch.mean((y_pred - y)**2)
-    else:
-        reconstruction_error = 0
+    # if train_decoder:
+    #     # Compute the reconstruction error
+    #     y_pred = decoder(h_pred)
+    #     reconstruction_error = torch.mean((y_pred - y)**2)
+    # else:
+    #     reconstruction_error = 0
     
 
-    output = {'error': error, 'reconstruction_error': reconstruction_error, 'hy_hat': h_pred}
+    output = {'error': error, 'hy_hat': h_pred}
     return output
 
 
 # The ISTA algorithm is a simple iterative algorithm for solving the LASSO problem.
-def ISTA(predictor, hy, hx, sparsity_reg, n_steps_inf, lrt_z, tolerance, Zs_dim, FISTA=False, train_decoder=False, decoder=None, y=None,decoder_opt=None):
+def ISTA(predictor, hy, hx, sparsity_reg, n_steps_inf, lrt_z, tolerance, Zs_dim, FISTA=False):
     """
     Args:
         predictor: the predictor network
@@ -52,10 +49,6 @@ def ISTA(predictor, hy, hx, sparsity_reg, n_steps_inf, lrt_z, tolerance, Zs_dim,
         lrt_z: the learning rate for the z variable
         tolerance: the early stopping tolerance
         FISTA: whether to use the FISTA algorithm
-        training_decoder: whether to train the decoder
-        decoder: the decoder network (optional)
-        y: the target frames to reproduce (optional)
-        decoder_opt: the optimizer for the decoder network (optional)
     """
     # Housekeeping
     B, T_in, d = hx.shape
@@ -84,13 +77,13 @@ def ISTA(predictor, hy, hx, sparsity_reg, n_steps_inf, lrt_z, tolerance, Zs_dim,
     # Inference loop
     for step in range(n_steps_inf):
         trainable_parameters = aux if FISTA else Zs
-        loss_dict = loss_f(trainable_parameters, predictor, hx, hy, train_decoder=False, decoder=decoder, y=y)
+        loss_dict = loss_f(trainable_parameters, predictor, hx, hy)
         error = loss_dict['error']
-        reconstruction_error = loss_dict['reconstruction_error']
+        # print("error",error)
 
         # Gradient computation
         trainable_parameters.grad = None
-        error.backward()
+        error.backward(retain_graph=True)
 
         # print("Zs grad",Zs.grad)
         # print("trainable_parameters grad",trainable_parameters.grad)
@@ -125,15 +118,15 @@ def ISTA(predictor, hy, hx, sparsity_reg, n_steps_inf, lrt_z, tolerance, Zs_dim,
     Zs = Zs.detach()
     Zs.requires_grad_(False)
 
-    # Train the decoder
-    if train_decoder:
-        decoder_opt.zero_grad()
-        loss_dict = loss_f(Zs, predictor, hx, hy, train_decoder=True, decoder=decoder, y=y)
-        loss = loss_dict['reconstruction_error']
-        loss.backward()
-        decoder_opt.step()
+    # # Train the decoder
+    # if train_decoder:
+    #     decoder_opt.zero_grad()
+    #     loss_dict = loss_f(Zs, predictor, hx, hy, train_decoder=True, decoder=decoder, y=y)
+    #     loss = loss_dict['reconstruction_error']
+    #     loss.backward()
+    #     decoder_opt.step()
 
-    output = {'Zs': Zs, 'Zs_steps_mean': Zs_steps_mean, 'error': error, 'reconstruction_error': reconstruction_error}
+    output = {'Zs': Zs, 'Zs_steps_mean': Zs_steps_mean, 'error': error}
     return output
 
 
