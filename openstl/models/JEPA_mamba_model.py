@@ -103,13 +103,13 @@ class JEPA_Mamba_Model(nn.Module):
     def forward(self, frames_tensor, latent_tensor, **kwargs):
         # Get first 3 frames from the input'
         x = frames_tensor[:, :self.in_frames]
-        print("x shape:", x.shape)
+        # print("x shape:", x.shape)
         # Encode the input frames
         hx = self.encoder(x)
 
         # Encode the target frames
         y = frames_tensor[:, self.in_frames:self.in_frames+self.out_frames]
-        print("y shape:", y.shape)
+        # print("y shape:", y.shape)
         hy = self.encoder(y)
 
         # Run the ISTA algorithm to get the latent tensor
