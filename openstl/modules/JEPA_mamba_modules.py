@@ -617,103 +617,19 @@ class Backbone_VMAMBA2(VMAMBA2):
     
 
 class VMAMBA2_Video_Encoder(nn.Module):
-    def __init__(self, backbone, num_frames, num_classes, hidden_dim=512, num_layers=3, **kwargs):
+    def __init__(self, **kwargs):
         super(VMAMBA2_Video_Encoder, self).__init__()
-        self.backbone = backbone
-        self.num_frames = num_frames
-        self.num_classes = num_classes
-        self.hidden_dim = hidden_dim
-        self.num_layers = num_layers
+        self.backbone = VMAMBA2(**kwargs)
 
 
     def forward(self, x):
         B, F, C, H, W = x.shape
         x = x.view(B*F, C, H, W)
-        x = self.backbone(x)
+        x = self.backbone.forward_features(x)
+        print(f"Shape of encoder output: {x.shape}")
         x = x.view(B, F, -1)
 
         return x
     
-# Now the prediction module
-# Description:
-# The predictor is an MLP with 2 hidden layers. Unless otherwise noted, the input
-# x contains 3 frames and the target y contains the following 12 frames in the video. The predictor outputs the
-# hidden state of the 12 target frames y simultaneously.
 
-# In the first setting, z is modeled as a discrete latent variable. In particular, it is a one-hot vector of dimension
-# 5 (which is the number of possible random switches in the trajectory by design). The discrete latent z
-# influences the top linear layer of the Predictor, which can be one of 5 options based on the value of z. In
-# other words, the active component in z selects the last linear layer of the Predictor.
-class MovingMNISTJEPAPredictor(nn.Module):
-    def __init__(self, in_channels=1024, in_frames=3, out_channels=1024, out_frames=12, hidden_size=2048, latent_vector_mode=1, latent_vector_size=5):
-        super(MovingMNISTJEPAPredictor, self).__init__()
-
-        self.latent_vector_mode = latent_vector_mode
-        self.latent_vector_size = latent_vector_size
-
-        self.in_frames = in_frames
-        self.out_frames = out_frames
-        print(f"out_frames: {out_frames}")
-
-        self.in_channels = in_channels
-        self.out_channels = out_channels
-
-        self.in_size = in_channels * in_frames
-        self.out_size = out_channels * out_frames
-
-        self.hidden_size = hidden_size
-        
-        # 2 hidden layers
-        self.fc1 = nn.Linear(self.in_size, self.hidden_size)
-        self.fc2 = nn.Linear(self.hidden_size, self.hidden_size)
-
-        if latent_vector_mode == 1:
-            # 5 output layers that get selected based on the latent vector
-            self.fc3_options = nn.ModuleList([
-                nn.Linear(self.hidden_size, self.out_size) for _ in range(latent_vector_size)
-            ])
-        elif latent_vector_mode == 2:
-            # In mode 2 we have stored a latent vector in the input and every optimization step, we update the latent vector with the gradient of the loss
-            # 1 output layer with latent vector concatenated to the input
-            self.fc3 = nn.Linear(self.hidden_size + latent_vector_size, self.out_size)
-        
-
-
-        
-    def forward(self, hx, z):
-        """
-        hx: Tensor of shape (B, T_in, d)
-           T_in is the number of input frames (e.g., 3).
-           d is the feature dimension per frame.
-        z: Tensor of shape (B, latent_dim) -- one-hot vectors of dimension 5.
-        output: Tensor of shape (B, output_dim)
-           where output_dim = (T_out * d), T_out being the number of target frames (e.g., 12).
-        """
-
-        B, T_in, d = hx.shape
-        # Flatten hx by concatenating the features of the input frames.
-        hx_flat = hx.reshape(B, T_in * d)  # shape: (B, T_in*d)
-        
-        h = F.relu(self.fc1(hx_flat))
-        h = F.relu(self.fc2(h))
-
-        if self.latent_vector_mode == 1:
-        
-            # Compute outputs for each latent option
-            # Each option yields a tensor of shape (B, output_dim)
-            outputs = torch.stack([fc3(h) for fc3 in self.fc3_options], dim=1)  # shape: (B, latent_dim, output_dim)
-            
-            # Combine the outputs using the one-hot latent vector z.
-            # For a one-hot vector, this will effectively select the corresponding output.
-            z = z.unsqueeze(-1)  # shape: (B, latent_dim, 1)
-            output = torch.sum(outputs * z, dim=1)  # shape: (B, output_dim)
-        elif self.latent_vector_mode == 2:
-            # Concatenate the latent vector to the hidden state
-            h = torch.cat([h, z], dim=1)
-            output = self.fc3(h)  # shape: (B, output_dim)
-
-        # Reshape to (B, T_out, d) where d is the output channels
-        output = output.view(B, self.out_frames, self.out_channels)
-        
-        return output
     

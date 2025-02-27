@@ -3,12 +3,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class MovingMNISTJEPADecoder(nn.Module):
+class JEPAImageDecoder(nn.Module):
     """
     Simple MLP-based decoder for transforming JEPA embeddings back to image space.
     """
     def __init__(self, in_channels=1024, hidden_size=2048, img_channels=1, img_height=64, img_width=64):
-        super(MovingMNISTJEPADecoder, self).__init__()
+        super(JEPAImageDecoder, self).__init__()
         
         self.in_channels = in_channels
         self.hidden_size = hidden_size
@@ -51,13 +51,13 @@ class MovingMNISTJEPADecoder(nn.Module):
         return x
 
 
-class MovingMNISTJEPAConvDecoder(nn.Module):
+class JEPAConvImageDecoder(nn.Module):
     """
     A slightly more sophisticated decoder using both MLP and transposed convolutions.
     More parameter efficient while preserving spatial relationships.
     """
     def __init__(self, in_channels=1024, hidden_size=1024, img_channels=1, img_height=64, img_width=64):
-        super(MovingMNISTJEPAConvDecoder, self).__init__()
+        super(JEPAConvImageDecoder, self).__init__()
         
         self.in_channels = in_channels
         self.img_channels = img_channels

@@ -9,6 +9,8 @@ from .predrnn_modules import SpatioTemporalLSTMCell
 from .predrnnpp_modules import CausalLSTMCell, GHU
 from .predrnnv2_modules import SpatioTemporalLSTMCellv2
 from .simple_jepa_modules import MovingMNISTJEPAEncoder, MovingMNISTJEPAPredictor, MovingMNISTJEPADecoder
+from .JEPA_mamba_modules import Backbone_VMAMBA2, VMAMBA2_Video_Encoder
+from .JEPA_mamba_decoder import JEPAImageDecoder, JEPAConvImageDecoder
 from .simvp_modules import (BasicConv2d, ConvSC, GroupConv2d,
                             ConvNeXtSubBlock, ConvMixerSubBlock, GASubBlock, gInception_ST,
                             HorNetSubBlock, MLPMixerSubBlock, MogaSubBlock, PoolFormerSubBlock,
@@ -27,7 +29,8 @@ __all__ = [
     'SwinSubBlock', 'UniformerSubBlock', 'VANSubBlock', 'ViTSubBlock', 'TAUSubBlock',
     'ResBlock', 'RRDB', 'ResidualDenseBlock_4C', 'Up', 'Conv3D', 'ConvLayer',
     'MatrixPredictor3DConv', 'SimpleMatrixPredictor3DConv_direct', 'PredictModel',
-    'UpSample', 'DownSample', 'STconvert', 'MovingMNISTJEPAEncoder', 'MovingMNISTJEPAPredictor', 'MovingMNISTJEPADecoder'
+    'UpSample', 'DownSample', 'STconvert', 'MovingMNISTJEPAEncoder', 'MovingMNISTJEPAPredictor', 'MovingMNISTJEPADecoder', 
+    'Backbone_VMAMBA2', 'VMAMBA2_Video_Encoder',  'JEPAImageDecoder', 'JEPAConvImageDecoder'
     
     
 ]
