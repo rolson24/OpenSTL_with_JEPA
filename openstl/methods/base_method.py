@@ -60,7 +60,7 @@ class Base_method(l.LightningModule):
         batch_x, batch_y = batch
         pred_y = self(batch_x, batch_y)
         loss = self.criterion(pred_y, batch_y)
-        self.log('val_loss', loss, on_step=True, on_epoch=True, prog_bar=False)
+        self.log('val_loss', loss.item(), on_step=True, on_epoch=True, prog_bar=False)
         return loss
     
     def test_step(self, batch, batch_idx):

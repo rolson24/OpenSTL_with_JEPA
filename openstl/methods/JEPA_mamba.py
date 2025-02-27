@@ -55,3 +55,20 @@ class MNIST_JEPA_Mamba(Base_method):
         self.log('train_loss', loss.item(), on_step=True, on_epoch=True, prog_bar=True)
         return loss
     
+    def validation_step(self, batch, batch_idx):
+        batch_x, batch_y = batch
+        # print("batch_x: ", batch_x.shape)
+        # print("batch_y: ", batch_y.shape)
+        # Concatenate the input and output tensors
+        ims = torch.cat([batch_x, batch_y], dim=1).contiguous()
+        if self.hparams.latent_tensor_mode == 2:
+            pred_y, loss = self.model(ims, None)
+        else:
+            # Extract the latent tensor from the batch tensor
+            latent_tensor = batch_x[:, 0]
+            pred_y, loss = self.model(ims, latent_tensor)
+
+        # print(f"loss: {loss}")
+
+        self.log('train_loss', loss.item(), on_step=True, on_epoch=True, prog_bar=True)
+        return loss
