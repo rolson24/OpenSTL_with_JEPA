@@ -130,7 +130,7 @@ class BaseExperiment(object):
             input_dummy = (_tmp_input, _tmp_flag)
         elif args.method == 'prednet':
            input_dummy = torch.ones(1, 1, C, H, W, requires_grad=True).to(device)
-        elif args.method == 'simple_mnist_jepa':
+        elif args.method == 'simple_mnist_jepa' or args.method == 'mnist_jepa_mamba':
             input_dummy = torch.ones(1, args.pre_seq_length, C, H, W).to(device)
             output_dummy = torch.ones(1, args.aft_seq_length, C, H, W).to(device)
             input_dummy = torch.cat((input_dummy, output_dummy), dim=1)

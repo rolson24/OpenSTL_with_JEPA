@@ -14,7 +14,7 @@ from .mmvp import MMVP
 from .swinlstm import SwinLSTM_D, SwinLSTM_B
 from .wast import WaST
 from .simple_jepa import Simple_MNIST_JEPA
-from .JEPA_mamba import MNIST_JEPA_mamba
+from .JEPA_mamba import MNIST_JEPA_Mamba
 
 method_maps = {
     'convlstm': ConvLSTM,
@@ -33,12 +33,12 @@ method_maps = {
     'swinlstm': SwinLSTM_B,
     'wast': WaST,
     'simple_mnist_jepa': Simple_MNIST_JEPA,
-    'mnist_jepa_mamba': MNIST_JEPA_mamba
+    'mnist_jepa_mamba': MNIST_JEPA_Mamba
 }
 
 __all__ = [
     'method_maps', 'ConvLSTM', 'E3DLSTM', 'MAU', 'MIM',
     'PredRNN', 'PredRNNpp', 'PredRNNv2', 'PhyDNet', 'SimVP', 'TAU',
     "MMVP", 'SwinLSTM_D', 'SwinLSTM_B', 'WaST', 'Simple_MNIST_JEPA',
-    'MNIST_JEPA_mamba'
+    'MNIST_JEPA_Mamba'
 ]

@@ -5,7 +5,7 @@ from openstl.utils import (reshape_patch, reshape_patch_back,
 from .base_method import Base_method
 
 
-class MNIST_JEPA_mamba(Base_method):
+class MNIST_JEPA_Mamba(Base_method):
 
     def __init__(self, **args):
         super().__init__(**args)
