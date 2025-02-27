@@ -92,7 +92,7 @@ class JEPA_Mamba_Model(nn.Module):
 
         if configs['train_decoder']:
             # Now create a decoder that will take the output of the predictor to generate the next frames
-            self.decoder = JEPAImageDecoder(in_channels=self.embed_dim, img_channels=C, img_height=H, img_width=W)
+            self.decoder = JEPAImageDecoder(in_channels=self.encoding_dim, img_channels=C, img_height=H, img_width=W)
             self.decoder_opt = torch.optim.Adam(self.decoder.parameters(), lr=configs['lrt_decoder'])
         else:
             self.decoder = None
