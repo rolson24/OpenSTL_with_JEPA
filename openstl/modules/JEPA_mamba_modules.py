@@ -14,7 +14,7 @@ import copy
 try:
     from mamba_util import PatchMerging,SimplePatchMerging, Stem, SimpleStem, Mlp
 except:
-    from utils import PatchMerging, SimplePatchMerging, Stem, SimpleStem, Mlp
+    from openstl.utils import PatchMerging, SimplePatchMerging, Stem, SimpleStem, Mlp
 from fvcore.nn import FlopCountAnalysis, flop_count_str, flop_count, parameter_count
 
 class tTensor(torch.Tensor):
