@@ -101,6 +101,10 @@ class MovingMNISTJEPAPredictor(nn.Module):
         self.fc1 = nn.Linear(self.in_size, self.hidden_size)
         self.fc2 = nn.Linear(self.hidden_size, self.hidden_size)
 
+        if latent_vector_mode == 0:
+            # 1 output layer
+            self.fc3 = nn.Linear(self.hidden_size, self.out_size)
+
         if latent_vector_mode == 1:
             # 5 output layers that get selected based on the latent vector
             self.fc3_options = nn.ModuleList([
@@ -131,7 +135,10 @@ class MovingMNISTJEPAPredictor(nn.Module):
         h = F.relu(self.fc1(hx_flat))
         h = F.relu(self.fc2(h))
 
-        if self.latent_vector_mode == 1:
+        if self.latent_vector_mode == 0:
+            output = self.fc3(h)
+
+        elif self.latent_vector_mode == 1:
         
             # Compute outputs for each latent option
             # Each option yields a tensor of shape (B, output_dim)
