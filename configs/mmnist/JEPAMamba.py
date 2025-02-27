@@ -17,7 +17,7 @@ linear_attn_duality = True
 attn_types = ['mamba2', 'mamba2', 'mamba2', 'standard']
 d_state = 64
 # predictor
-latent_tensor_mode = 2
+latent_tensor_mode = 0
 latent_tensor_size = 20
 sparsity_reg = 0.2
 n_steps_inf = 10
