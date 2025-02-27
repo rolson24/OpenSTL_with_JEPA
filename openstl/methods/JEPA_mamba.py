@@ -70,5 +70,5 @@ class MNIST_JEPA_Mamba(Base_method):
 
         # print(f"loss: {loss}")
 
-        self.log('train_loss', loss.item(), on_step=True, on_epoch=True, prog_bar=True)
+        self.log('val_loss', loss.item(), on_step=True, on_epoch=True, prog_bar=True)
         return loss
