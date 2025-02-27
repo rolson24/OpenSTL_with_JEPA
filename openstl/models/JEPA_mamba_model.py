@@ -67,14 +67,13 @@ class JEPA_Mamba_Model(nn.Module):
 
         self.encoder = VMAMBA2_Video_Encoder(
             image_size=H,
-            patch_size=8,
+            patch_size=configs['patch_size'],
             in_chans=C,
             embed_dim=self.embed_dim,
             depths=configs['depths'],
             num_heads=configs['num_heads'],
             mlp_ratio=configs['mlp_ratio'],
             qkv_bias=configs['qkv_bias'],
-            qk_scale=configs['qk_scale'],
             drop_rate=configs['drop_rate'],
             drop_path_rate=configs['drop_path_rate'],
             ssd_expansion=configs['ssd_expansion'],
