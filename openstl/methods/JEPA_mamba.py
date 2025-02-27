@@ -50,6 +50,8 @@ class MNIST_JEPA_Mamba(Base_method):
             latent_tensor = batch_x[:, 0]
             pred_y, loss = self.model(ims, latent_tensor)
 
-        self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True)
+        # print(f"loss: {loss}")
+
+        self.log('train_loss', loss.item(), on_step=True, on_epoch=True, prog_bar=True)
         return loss
     
