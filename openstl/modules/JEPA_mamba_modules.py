@@ -626,7 +626,7 @@ class VMAMBA2_Video_Encoder(nn.Module):
         B, F, C, H, W = x.shape
         x = x.reshape(B*F, C, H, W) # Squeeze the frames into the batch dimension
         x = self.backbone.forward_features(x)
-        print(f"Shape of encoder output: {x.shape}")
+        # print(f"Shape of encoder output: {x.shape}")
         x = x.reshape(B, F, -1) # Unsqueeze the batch dimension
 
         return x
