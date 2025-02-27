@@ -83,8 +83,10 @@ class JEPA_Mamba_Model(nn.Module):
             d_state=configs['d_state']
         )
 
+        self.encoding_dim = self.embed_dim * 8 # ???
 
-        self.predictor = MovingMNISTJEPAPredictor(in_channels=self.embed_dim, out_channels=self.embed_dim, in_frames=self.in_frames, out_frames=self.out_frames, latent_vector_mode=self.latent_tensor_mode, latent_vector_size=self.latent_tensor_size)
+
+        self.predictor = MovingMNISTJEPAPredictor(in_channels=self.encoding_dim, out_channels=self.encoding_dim, in_frames=self.in_frames, out_frames=self.out_frames, latent_vector_mode=self.latent_tensor_mode, latent_vector_size=self.latent_tensor_size)
 
 
 
