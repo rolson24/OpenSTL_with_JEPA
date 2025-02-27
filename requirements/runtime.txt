@@ -19,4 +19,4 @@ tqdm
 xarray
 lightning==2.2.1
 PyWavelets
-mamba-ssm==2.0.4
+mamba-ssm
