@@ -1,5 +1,5 @@
 import torch
-from openstl.models import JEPA_mamba_model
+from openstl.models import JEPA_Mamba_Model
 from openstl.utils import (reshape_patch, reshape_patch_back,
                            reserve_schedule_sampling_exp, schedule_sampling)
 from .base_method import Base_method
@@ -14,7 +14,7 @@ class MNIST_JEPA_mamba(Base_method):
     def _build_model(self, **args):
         print("args: ", args)
         print("hparams: ", self.hparams)
-        return JEPA_mamba_model(configs=args)
+        return JEPA_Mamba_Model(configs=args)
 
     def _get_constraints(self):
         constraints = torch.zeros((49, 7, 7))
