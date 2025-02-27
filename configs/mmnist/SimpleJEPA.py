@@ -1,21 +1,22 @@
-method = 'PredRNNpp'
-# reverse scheduled sampling
-reverse_scheduled_sampling = 0
-r_sampling_step_1 = 25000
-r_sampling_step_2 = 50000
-r_exp_alpha = 5000
-# scheduled sampling
-scheduled_sampling = 1
-sampling_stop_iter = 50000
-sampling_start_value = 1.0
-sampling_changing_rate = 0.00002
+method = 'simple_mnist_jepa'
 # model
-num_hidden = '128,128,128,128'
-filter_size = 5
-stride = 1
-patch_size = 4
-layer_norm = 0
+in_shape = [3, 3, 32, 32]
+embed_dim = 512
+latent_tensor_mode = 2
+latent_tensor_size = 20
+sparsity_reg = 0.2
+n_steps_inf = 10
+lrt_z = 1
+tolerance = 1e-6
+alpha = 0.1
+beta = 0.1
+train_decoder = True
+lrt_decoder = 0.01
+aft_seq_length = 12
+pre_seq_length = 3
+total_length = 15
 # training
 lr = 1e-4
 batch_size = 16
 sched = 'onecycle'
+epoch = 10

@@ -60,15 +60,21 @@ def l_vcr(h, alpha, beta):
         alpha: the weight of the variance term
         beta: the weight of the covariance term
     """
+    # print("h: ", h)
     B, T, d = h.shape
+    # print("min: ", torch.min(h))
+    # print("max: ", torch.max(h))
     # First we compute the varaiance term
-    var = torch.var(h, dim=0, unbiased=True) # shape: (T, d)
+    var = torch.var(h, dim=0, unbiased=False) # shape: (T, d)
+    # print("var: ", var)
 
     # Compute the std deviation
     std = torch.sqrt(var + 1e-6)
 
     # Apply the hinge loss
     var_term = torch.clamp(1 - std, min=0).mean()
+
+    # print("var_term:", var_term)
 
     # # Next we compute the covariance term
     # cov_loss = 0.0
@@ -92,11 +98,15 @@ def l_vcr(h, alpha, beta):
     mean_t = h.mean(dim=0, keepdim=True) # shape: (1, T, d)
     h_centered = h - mean_t
     h_centered = h_centered.permute(1, 0, 2) # shape: (T, B, d)
+    # print("h_centered:", h_centered)
     # Compute the covariance matrix for each frame
-    cov = torch.bmm(h_centered.transpose(1, 2), h_centered) / (B - 1) # shape: (T, d, d)
+    cov = torch.bmm(h_centered.transpose(1, 2), h_centered) / (B) # shape: (T, d, d)
+    # print("cov:", cov)
     # Zero out the diagonal
     mask = 1 - torch.eye(d, device=h.device).unsqueeze(0) # shape: (1, d, d)
     cov_term = ((cov * mask) ** 2).sum() / (T * d)
+
+    # print("cov_term:", cov_term)
 
     return alpha*var_term + beta*cov_term
 
@@ -115,19 +125,22 @@ class SimpleJEPA_Model(nn.Module):
         self.latent_tensor_mode = configs['latent_tensor_mode']
         self.latent_tensor_size = configs['latent_tensor_size']
 
+        self.in_frames = configs['pre_seq_length']
+        self.out_frames = configs['aft_seq_length']
+
         self.input_encoder = MovingMNISTJEPAEncoder(in_channels=C, out_channels=configs['embed_dim'])
 
-        self.predictor = MovingMNISTJEPAPredictor(in_channels=configs['embed_dim'], out_channels=configs['embed_dim'], latent_vector_mode=self.latent_tensor_mode, latent_vector_size=self.latent_tensor_size)
+        self.predictor = MovingMNISTJEPAPredictor(in_channels=configs['embed_dim'], out_channels=configs['embed_dim'], in_frames=self.in_frames, out_frames=self.out_frames, latent_vector_mode=self.latent_tensor_mode, latent_vector_size=self.latent_tensor_size)
 
         # Now create the target encoder that has a momentum average of the weights of the input encoder
-        self.target_encoder = MovingMNISTJEPAEncoder(in_channels=C, out_channels=configs['embed_dim'])
+        # self.target_encoder = MovingMNISTJEPAEncoder(in_channels=C, out_channels=configs['embed_dim'])
         # Copy the weights of the input encoder to the target encoder
-        self.target_encoder.load_state_dict(self.input_encoder.state_dict())
+        # self.target_encoder.load_state_dict(self.input_encoder.state_dict())
         # Make the target encoder not trainable
-        for param in self.target_encoder.parameters():
-            param.requires_grad = False
-        # How to update the target encoder
-        self.target_encoder_update_rate = 0.999
+        # for param in self.target_encoder.parameters():
+        #     param.requires_grad = False
+        # # How to update the target encoder
+        # self.target_encoder_update_rate = 0.999
 
         if configs['train_decoder']:
             # Now create a decoder that will take the output of the predictor to generate the next frames
@@ -141,22 +154,26 @@ class SimpleJEPA_Model(nn.Module):
 
     def forward(self, frames_tensor, latent_tensor, **kwargs):
         # Get first 3 frames from the input'
-        x = frames_tensor[:, :3]
+        x = frames_tensor[:, :self.in_frames]
         print("x shape:", x.shape)
         # Encode the input frames
         hx = self.input_encoder(x)
 
         # Encode the target frames
-        y = frames_tensor[:, 3:]
+        y = frames_tensor[:, self.in_frames:self.in_frames+self.out_frames]
         print("y shape:", y.shape)
-        hy = self.target_encoder(y)
+        hy = self.input_encoder(y)
 
         # Run the ISTA algorithm to get the latent tensor
         if self.latent_tensor_mode == 2:
-            # This trains the decoder as well (probably doesn't make sense to do this, but oh well)
-            ISTA_output = ISTA(self.predictor, hy, hx, self.configs['sparsity_reg'], self.configs['n_steps_inf'], self.configs['lrt_z'], self.configs['tolerance'], self.latent_tensor_size, FISTA=False)
-            latent_tensor = ISTA_output['Zs']
+            with torch.enable_grad():
+                # This trains the decoder as well (probably doesn't make sense to do this, but oh well)
+                ISTA_output = ISTA(self.predictor, hy, hx, self.configs['sparsity_reg'], self.configs['n_steps_inf'], self.configs['lrt_z'], self.configs['tolerance'], self.latent_tensor_size, FISTA=False)
+                latent_tensor = ISTA_output['Zs']
 
+        # Enable the gradients for the predictor
+        self.predictor.requires_grad_(True)
+        self.predictor.train()
         # Predict the next frames with the latent tensor
         hy_hat = self.predictor(hx, latent_tensor)
 
@@ -165,9 +182,11 @@ class SimpleJEPA_Model(nn.Module):
 
         # Compute the l_vcr term
         l_vcr_term = l_vcr(h_full, self.configs['alpha'], self.configs['beta'])
+        # print("l_vcr_term:", l_vcr_term)
 
         # Compute the prediction error
         prediction_error = torch.mean((hy_hat - hy)**2)
+        # print("prediction_error:", prediction_error)
 
         # Compute the reconstruction error
         if self.configs['train_decoder']:
@@ -176,6 +195,8 @@ class SimpleJEPA_Model(nn.Module):
         else:
             y_pred = y
             reconstruction_error = 0
+        
+        # print("reconstruction_error:", reconstruction_error)
 
         # Compute the total loss
         total_loss = prediction_error + l_vcr_term + reconstruction_error

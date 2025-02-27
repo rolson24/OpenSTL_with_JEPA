@@ -13,24 +13,24 @@ class MovingMNISTJEPAEncoder(nn.Module):
     def __init__(self, in_channels=3, out_channels=1024):
         super(MovingMNISTJEPAEncoder, self).__init__()
         self.in_channels = in_channels
-        self.spatial_output_channels = 256
+        self.spatial_output_channels = out_channels//4
         self.out_channels = out_channels
         
         # 3 spatial convolutions
-        self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=64, kernel_size=3, padding=1)
-        self.bn1 = nn.BatchNorm2d(64)
+        self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=self.spatial_output_channels//4, kernel_size=3, padding=1)
+        self.bn1 = nn.BatchNorm2d(self.spatial_output_channels//4)
         
-        self.conv2 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, padding=1)
-        self.bn2 = nn.BatchNorm2d(128)
+        self.conv2 = nn.Conv2d(in_channels=self.spatial_output_channels//4, out_channels=self.spatial_output_channels//2, kernel_size=3, padding=1)
+        self.bn2 = nn.BatchNorm2d(self.spatial_output_channels//2)
         
-        self.conv3 = nn.Conv2d(in_channels=128, out_channels=self.spatial_output_channels, kernel_size=3, padding=1)
+        self.conv3 = nn.Conv2d(in_channels=self.spatial_output_channels//2, out_channels=self.spatial_output_channels, kernel_size=3, padding=1)
         self.bn3 = nn.BatchNorm2d(self.spatial_output_channels)
         
         # 2 temporal convolutions (1D along time axis)
-        self.conv4 = nn.Conv1d(in_channels=self.spatial_output_channels, out_channels=512, kernel_size=3, padding=1)
-        self.bn4 = nn.BatchNorm1d(512)
+        self.conv4 = nn.Conv1d(in_channels=self.spatial_output_channels, out_channels=self.out_channels//2, kernel_size=3, padding=1)
+        self.bn4 = nn.BatchNorm1d(self.out_channels//2)
 
-        self.conv5 = nn.Conv1d(in_channels=512, out_channels=self.out_channels, kernel_size=3, padding=1)
+        self.conv5 = nn.Conv1d(in_channels=self.out_channels//2, out_channels=self.out_channels, kernel_size=3, padding=1)
         self.bn5 = nn.BatchNorm1d(self.out_channels)
         
         # Note: we use adaptive_avg_pool2d to pool over spatial dims.
@@ -87,6 +87,7 @@ class MovingMNISTJEPAPredictor(nn.Module):
 
         self.in_frames = in_frames
         self.out_frames = out_frames
+        print(f"out_frames: {out_frames}")
 
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -160,20 +161,20 @@ class MovingMNISTJEPADecoder(nn.Module):
         self.image_size = image_size
         
         # Reverse of temporal conv (1D) layers
-        self.convT4 = nn.ConvTranspose1d(in_channels=self.in_channels, out_channels=512, kernel_size=3, padding=1)
-        self.bn4 = nn.BatchNorm1d(512)
+        self.convT4 = nn.ConvTranspose1d(in_channels=self.in_channels, out_channels=self.in_channels//2, kernel_size=3, padding=1)
+        self.bn4 = nn.BatchNorm1d(self.in_channels//2)
         
-        self.convT5 = nn.ConvTranspose1d(in_channels=512, out_channels=256, kernel_size=3, padding=1)
-        self.bn5 = nn.BatchNorm1d(256)
+        self.convT5 = nn.ConvTranspose1d(in_channels=self.in_channels//2, out_channels=self.in_channels//4, kernel_size=3, padding=1)
+        self.bn5 = nn.BatchNorm1d(self.in_channels//4)
         
         # Reverse of spatial conv (2D) layers
-        self.convT1 = nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=3, padding=1)
-        self.bn1 = nn.BatchNorm2d(128)
+        self.convT1 = nn.ConvTranspose2d(in_channels=self.in_channels//4, out_channels=self.in_channels//8, kernel_size=3, padding=1)
+        self.bn1 = nn.BatchNorm2d(self.in_channels//8)
         
-        self.convT2 = nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=3, padding=1)
-        self.bn2 = nn.BatchNorm2d(64)
+        self.convT2 = nn.ConvTranspose2d(in_channels=self.in_channels//8, out_channels=self.in_channels//16, kernel_size=3, padding=1)
+        self.bn2 = nn.BatchNorm2d(self.in_channels//16)
         
-        self.convT3 = nn.ConvTranspose2d(in_channels=64, out_channels=out_channels, kernel_size=3, padding=1)
+        self.convT3 = nn.ConvTranspose2d(in_channels=self.in_channels//16, out_channels=out_channels, kernel_size=3, padding=1)
         
     def forward(self, x):
         # x shape: (B, T, 1024)
@@ -186,7 +187,7 @@ class MovingMNISTJEPADecoder(nn.Module):
         x = x.transpose(1, 2)  # (B, T, 256)
         
         # Flatten (B, T) => (B*T, ...)
-        x = x.reshape(B * T, 256, 1, 1)  # (B*T, 256, 1, 1)
+        x = x.reshape(B * T, self.in_channels//4, 1, 1)  # (B*T, 256, 1, 1)
 
         # Adjust if you upsample differently (e.g., via stride or interpolate)
         # Here we assume final 64x64 output frames:

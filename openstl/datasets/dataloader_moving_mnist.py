@@ -241,11 +241,11 @@ def load_data(batch_size, val_batch_size, data_root, num_workers=4, data_name='m
     image_size = in_shape[-1] if in_shape is not None else 64
     train_set = MovingMNIST(root=data_root, is_train=True, data_name=data_name,
                             n_frames_input=pre_seq_length,
-                            n_frames_output=aft_seq_length, num_objects=[2],
+                            n_frames_output=aft_seq_length, num_objects=[1],
                             image_size=image_size, use_augment=use_augment)
     test_set = MovingMNIST(root=data_root, is_train=False, data_name=data_name,
                            n_frames_input=pre_seq_length,
-                           n_frames_output=aft_seq_length, num_objects=[2],
+                           n_frames_output=aft_seq_length, num_objects=[1],
                            image_size=image_size, use_augment=False)
 
     dataloader_train = create_loader(train_set,

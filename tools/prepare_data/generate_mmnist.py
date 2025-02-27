@@ -40,7 +40,7 @@ def main():
     # generate the test set of Moving MMNIST variants
     args = parse_args()
     root = 'data/'
-    num_objects = [2]
+    num_objects = [1, 2, 3, 4, 5]
     file_map = {
         'mnist': 'data/moving_mnist/mnist_test_seq.npy',
         'fmnist': 'data/moving_fmnist/fmnist_test_seq.npy',

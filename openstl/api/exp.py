@@ -43,7 +43,8 @@ class BaseExperiment(object):
                        max_epochs=args.epoch,  # Maximum number of epochs to train for
                        strategy=strategy,   # 'ddp', 'deepspeed_stage_2', 'ddp_find_unused_parameters_false'
                        accelerator='gpu',  # Use distributed data parallel
-                       callbacks=callbacks
+                       callbacks=callbacks,
+                       inference_mode=False
                     )
 
     def _load_callbacks(self, args, save_dir, ckpt_dir):
@@ -129,6 +130,12 @@ class BaseExperiment(object):
             input_dummy = (_tmp_input, _tmp_flag)
         elif args.method == 'prednet':
            input_dummy = torch.ones(1, 1, C, H, W, requires_grad=True).to(device)
+        elif args.method == 'simple_mnist_jepa':
+            input_dummy = torch.ones(1, args.pre_seq_length, C, H, W).to(device)
+            output_dummy = torch.ones(1, args.aft_seq_length, C, H, W).to(device)
+            input_dummy = torch.cat((input_dummy, output_dummy), dim=1)
+            latent_dummy = torch.ones(1, args.pre_seq_length, args.latent_tensor_size).to(device)
+            input_dummy = (input_dummy, latent_dummy)
         else:
             raise ValueError(f'Invalid method name {args.method}')
 

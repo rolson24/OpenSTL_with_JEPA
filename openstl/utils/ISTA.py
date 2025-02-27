@@ -25,13 +25,7 @@ def loss_f(Zs, predictor, hx, hy):
     h_pred = predictor(hx, Zs)
     error = torch.mean((h_pred - hy)**2)
 
-    # if train_decoder:
-    #     # Compute the reconstruction error
-    #     y_pred = decoder(h_pred)
-    #     reconstruction_error = torch.mean((y_pred - y)**2)
-    # else:
-    #     reconstruction_error = 0
-    
+    # print("error",error)    
 
     output = {'error': error, 'hy_hat': h_pred}
     return output
@@ -57,13 +51,19 @@ def ISTA(predictor, hy, hx, sparsity_reg, n_steps_inf, lrt_z, tolerance, Zs_dim,
     out_frames = hy.shape[1]
     latent_dim = Zs_dim
 
+    # Make a copy of inputs and ensure they have requires_grad
+    hx = hx.detach().clone()
+    hy = hy.detach().clone()
+    hx.requires_grad_(True)
+    hy.requires_grad_(True)
+    
     # Turn off gradients for the predictor
     predictor.requires_grad_(False)
     predictor.eval()
 
     # Generate codes (initially random)
     # Zs = nn.Parameter(torch.zeros(B, latent_dim))
-    Zs = nn.Parameter(torch.randn(B, latent_dim))
+    Zs = nn.Parameter(torch.randn(B, latent_dim)).to(hx.device)
     Zs.requires_grad_(True)
 
     if FISTA:
@@ -76,17 +76,22 @@ def ISTA(predictor, hy, hx, sparsity_reg, n_steps_inf, lrt_z, tolerance, Zs_dim,
 
     # Inference loop
     for step in range(n_steps_inf):
-        trainable_parameters = aux if FISTA else Zs
-        loss_dict = loss_f(trainable_parameters, predictor, hx, hy)
-        error = loss_dict['error']
-        # print("error",error)
+        with torch.enable_grad():
+            trainable_parameters = aux if FISTA else Zs
+            # loss_dict = loss_f(trainable_parameters, predictor, hx, hy)
+            # error = loss_dict['error']
+            h_pred = predictor(hx.detach(), trainable_parameters)
+            error = torch.mean((h_pred - hy)**2)
+            # print("error",error)
+            # print("Zs",Zs)
 
-        # Gradient computation
-        trainable_parameters.grad = None
-        error.backward(retain_graph=True)
+            # Gradient computation
+            trainable_parameters.grad = None
+            error.backward(retain_graph=True)
+            # error.backward()
 
-        # print("Zs grad",Zs.grad)
-        # print("trainable_parameters grad",trainable_parameters.grad)
+            # print("Zs grad",Zs.grad)
+            # print("trainable_parameters grad",trainable_parameters.grad)
 
         # Keep track of old values for FISTA
         Zs_old = Zs.clone().detach()
@@ -118,6 +123,8 @@ def ISTA(predictor, hy, hx, sparsity_reg, n_steps_inf, lrt_z, tolerance, Zs_dim,
     Zs = Zs.detach()
     Zs.requires_grad_(False)
 
+    
+
     # # Train the decoder
     # if train_decoder:
     #     decoder_opt.zero_grad()
@@ -139,8 +146,12 @@ def ISTA_step(x, alpha, step_size, stop_early, positive=False):
         stop_early: whether to stop early
         positive: whether to enforce positivity
     """
-
+    # print("z_prox",x)
+    # print("x.grad",x.grad)
+    # print("step_size",step_size)
     z_prox = x.clone().detach()
+    if x.grad is None:
+        return nn.Parameter(z_prox)
     # ISTA gradient step followed by shrinkage
     with torch.no_grad():
         z_prox.data = soft_treshold(x.detach() - (1 - stop_early) * step_size * x.grad.data,
