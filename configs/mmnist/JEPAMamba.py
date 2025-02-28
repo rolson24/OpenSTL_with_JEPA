@@ -32,8 +32,8 @@ aft_seq_length = 12
 pre_seq_length = 3
 total_length = 15
 # training
-lr = 1e-3
-batch_size = 256
+lr = 1e-4
+batch_size = 32
 sched = 'onecycle'
 epoch = 100
 
