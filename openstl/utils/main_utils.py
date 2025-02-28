@@ -143,8 +143,9 @@ def update_config(args, config, exclude_keys=list()):
     assert isinstance(args, dict) and isinstance(config, dict)
     for k in config.keys():
         if args.get(k, False):
+            # Overwriting config with args if args[k] is not None
             if args[k] != config[k] and k not in exclude_keys and args[k] is not None:
-                print(f'overwrite config key -- {k}: {config[k]} -> {args[k]}')
+                print(f'overwrite config key -- {k}: {config[k]} -> {args[k]}') 
             else:
                 args[k] = config[k]
         else:

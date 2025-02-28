@@ -21,7 +21,7 @@ if __name__ == '__main__':
     else:
         loaded_cfg = load_config(cfg_path)
         config = update_config(config, loaded_cfg,
-                               exclude_keys=['method', 'val_batch_size',
+                               exclude_keys=['method', 'batch_size', 'val_batch_size',
                                              'drop_path', 'warmup_epoch'])
         default_values = default_parser()
         for attribute in default_values.keys():
