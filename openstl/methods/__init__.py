@@ -15,6 +15,7 @@ from .swinlstm import SwinLSTM_D, SwinLSTM_B
 from .wast import WaST
 from .simple_jepa import Simple_MNIST_JEPA
 from .JEPA_mamba import MNIST_JEPA_Mamba
+from .complicated_JEPA import Bounching_Shapes_Complicated_JEPA
 
 method_maps = {
     'convlstm': ConvLSTM,
@@ -33,7 +34,8 @@ method_maps = {
     'swinlstm': SwinLSTM_B,
     'wast': WaST,
     'simple_mnist_jepa': Simple_MNIST_JEPA,
-    'mnist_jepa_mamba': MNIST_JEPA_Mamba
+    'mnist_jepa_mamba': MNIST_JEPA_Mamba,
+    'complicated_jepa': Bounching_Shapes_Complicated_JEPA
 }
 
 __all__ = [
