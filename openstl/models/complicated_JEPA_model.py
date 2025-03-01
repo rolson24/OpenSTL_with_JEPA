@@ -108,7 +108,7 @@ class Complicated_JEPA_Model(nn.Module):
         Y = Y.reshape(B, T, C, H, W)
 
         decoder_errror = torch.mean((Y - x_target)**2)
-        
+
         return Y, l_vcr_term + prediction_error + decoder_errror
     
 
@@ -130,7 +130,7 @@ if __name__ == "__main__":
         'train_decoder': True,
         'lrt_decoder': 0.01
     }
-    model = Complicated_JEPA_Model(configs=configs)
+    model = Complicated_JEPA_Model(**configs)
     # Create some dummy data
     frames_tensor = torch.randn(2, 15, 1, 64, 64) # (B, T, C, H, W)
     latent_tensor = torch.randn(2, 20) # (B, latent_tensor_size) Doesn't matter what the size is for mode 2
