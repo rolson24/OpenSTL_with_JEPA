@@ -142,7 +142,7 @@ class MovingMNIST(Dataset):
         # Scale to the size of the canvas.
         start_y = (canvas_size * start_y).astype(np.int32)
         start_x = (canvas_size * start_x).astype(np.int32)
-        return start_y, start_x
+        return start_y, start_x, velocity
 
     def generate_moving_mnist(self, num_digits=2, background=False):
         '''
@@ -157,7 +157,7 @@ class MovingMNIST(Dataset):
             data = np.repeat(back[np.newaxis, ...], self.n_frames_total, axis=0).astype(np.uint8)
         for n in range(num_digits):
             # Trajectory
-            start_y, start_x = self.get_random_trajectory(self.n_frames_total)
+            start_y, start_x, velocity = self.get_random_trajectory(self.n_frames_total)
             ind = random.randint(0, self.mnist.shape[0] - 1)
             digit_image = self.mnist[ind].copy()
             if background:  # binary {0, 255}

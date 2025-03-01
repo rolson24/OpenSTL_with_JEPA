@@ -1,11 +1,11 @@
 method = 'simple_mnist_jepa'
 # model
 in_shape = [3, 3, 32, 32]
-embed_dim = 512
-latent_tensor_mode = 2
+embed_dim = 128
+latent_tensor_mode = 0
 latent_tensor_size = 20
 sparsity_reg = 0.2
-n_steps_inf = 10
+n_steps_inf = 100
 lrt_z = 1
 tolerance = 1e-6
 alpha = 0.1
@@ -19,4 +19,4 @@ total_length = 15
 lr = 1e-4
 batch_size = 16
 sched = 'onecycle'
-epoch = 10
+epoch = 100
