@@ -78,7 +78,7 @@ class Complicated_JEPA_Model(nn.Module):
         x_raw_target = frames_tensor[:, self.in_frames:self.in_frames+self.out_frames]
 
         B, T, C, H, W = x_raw_input.shape
-        x_in = x_raw_input.view(B*T, C, H, W)
+        x_in = x_raw_input.reshape(B*T, C, H, W)
 
         B, T, C, H, W = x_raw_target.shape
         x_target = x_raw_target.reshape(B*T, C, H, W)
