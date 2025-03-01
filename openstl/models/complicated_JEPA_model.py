@@ -81,7 +81,7 @@ class Complicated_JEPA_Model(nn.Module):
         x_in = x_raw_input.view(B*T, C, H, W)
 
         B, T, C, H, W = x_raw_target.shape
-        x_target = x_raw_target.view(B*T, C, H, W)
+        x_target = x_raw_target.reshape(B*T, C, H, W)
 
         # Encode the input frames
         embed, skip = self.enc(x_in)
