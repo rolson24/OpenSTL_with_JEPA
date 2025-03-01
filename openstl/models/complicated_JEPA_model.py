@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from openstl.modules import MovingMNISTJEPAEncoder, MovingMNISTJEPAPredictor, MovingMNISTJEPADecoder
+# from openstl.modules import MovingMNISTJEPAEncoder, MovingMNISTJEPAPredictor, MovingMNISTJEPADecoder
 from openstl.utils.ISTA import ISTA
-from openstl.modules import Encoder, Decoder, MidMetaNet
+from openstl.models import Encoder, Decoder, MidMetaNet
 
 
 def l_vcr(h, alpha, beta):
