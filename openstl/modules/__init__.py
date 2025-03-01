@@ -14,7 +14,7 @@ from .JEPA_mamba_decoder import JEPAImageDecoder, JEPAConvImageDecoder
 from .simvp_modules import (BasicConv2d, ConvSC, GroupConv2d,
                             ConvNeXtSubBlock, ConvMixerSubBlock, GASubBlock, gInception_ST,
                             HorNetSubBlock, MLPMixerSubBlock, MogaSubBlock, PoolFormerSubBlock,
-                            SwinSubBlock, UniformerSubBlock, VANSubBlock, ViTSubBlock, TAUSubBlockt)
+                            SwinSubBlock, UniformerSubBlock, VANSubBlock, ViTSubBlock, TAUSubBlock)
 from .mmvp_modules import (ResBlock, RRDB, ResidualDenseBlock_4C, Up, Conv3D, ConvLayer,
                            MatrixPredictor3DConv, SimpleMatrixPredictor3DConv_direct, PredictModel) 
 from .swinlstm_modules import UpSample, DownSample, STconvert
