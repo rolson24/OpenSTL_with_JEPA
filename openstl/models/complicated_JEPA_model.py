@@ -136,7 +136,7 @@ if __name__ == "__main__":
     latent_tensor = torch.randn(2, 20) # (B, latent_tensor_size) Doesn't matter what the size is for mode 2
     # mask_true = torch.randn(2, 5, 1, 64, 64)
     # Run the model
-    next_frames, total_loss = model(frames_tensor, latent_tensor)
+    next_frames, total_loss = model(frames_tensor)
     print("Next frames shape:", next_frames.shape)
     print("Total loss:", total_loss)
     print("Model ran successfully!")
