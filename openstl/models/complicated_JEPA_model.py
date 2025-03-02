@@ -98,14 +98,13 @@ class Complicated_JEPA_Model(nn.Module):
         # Predict the next frames
         z = embed.view(B, T_in, C_, H_, W_)
         hid = self.hid(z)
-        hid = hid.reshape(B*T_in, C_, H_, W_) # Squeeze the bactch and time dimensions
 
         # Encode the target frames
         target_embed, skip = self.enc(x_target)
         _, C_, H_, W_ = target_embed.shape
         z_target = target_embed.reshape(B, T_out, C_, H_, W_)
 
-
+        # Compute the VCR loss
         h_full = torch.cat([z, z_target], dim=1) # Concatenate the hidden states along the time dimension
         # Flatten the last 3 dimensions
         h_full = h_full.reshape(B, T_in + T_out, -1)
@@ -114,9 +113,9 @@ class Complicated_JEPA_Model(nn.Module):
 
         prediction_error = torch.mean((target_embed - hid)**2)
 
-
+        hid = hid.reshape(B*T_in, C_, H_, W_) # Squeeze the bactch and time dimensions
         Y = self.dec(hid, skip)
-        Y = Y.reshape(B, T, C, H, W)
+        Y = Y.reshape(B, T_out, C, H, W)
 
         decoder_errror = torch.mean((Y - x_target)**2)
 
