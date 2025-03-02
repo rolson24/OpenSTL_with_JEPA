@@ -30,7 +30,7 @@ def load_fixed_set(root, data_name='bouncing_shapes_train'):
     return img_dataset, label_data
 
 
-class BouncingShapes(Dataset):
+class BouncingShapesDataset(Dataset):
     """
     Args:
         data_root (str): Path to the dataset.
@@ -45,7 +45,7 @@ class BouncingShapes(Dataset):
     def __init__(self, root, is_train=True, data_name='bouncing_shapes',
                  n_frames_input=10, n_frames_output=10, image_size=64,
                  num_objects=[2], transform=None, use_augment=False):
-        super(BouncingShapes, self).__init__()
+        super(BouncingShapesDataset, self).__init__()
 
         self.dataset = None
         self.is_train = is_train
