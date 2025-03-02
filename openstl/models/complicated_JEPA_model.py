@@ -117,8 +117,9 @@ class Complicated_JEPA_Model(nn.Module):
         hid = hid.reshape(B*T_in, C_, H_, W_) # Squeeze the bactch and time dimensions
         Y = self.dec(hid, skip)
         Y = Y.reshape(B, T_out, C, H, W)
+        print("Y shape:", Y.shape)
 
-        decoder_errror = torch.mean((Y - x_target)**2)
+        decoder_errror = torch.mean((Y - x_raw_target)**2)
 
         return Y, l_vcr_term + prediction_error + decoder_errror
     
