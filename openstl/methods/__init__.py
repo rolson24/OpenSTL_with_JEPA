@@ -42,5 +42,5 @@ __all__ = [
     'method_maps', 'ConvLSTM', 'E3DLSTM', 'MAU', 'MIM',
     'PredRNN', 'PredRNNpp', 'PredRNNv2', 'PhyDNet', 'SimVP', 'TAU',
     "MMVP", 'SwinLSTM_D', 'SwinLSTM_B', 'WaST', 'Simple_MNIST_JEPA',
-    'MNIST_JEPA_Mamba'
+    'MNIST_JEPA_Mamba', 'Bounching_Shapes_Complicated_JEPA'
 ]
