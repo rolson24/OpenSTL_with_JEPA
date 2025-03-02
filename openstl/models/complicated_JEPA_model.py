@@ -107,6 +107,9 @@ class Complicated_JEPA_Model(nn.Module):
 
 
         h_full = torch.cat([z, z_target], dim=1) # Concatenate the hidden states along the time dimension
+        # Flatten the last 3 dimensions
+        h_full = h_full.reshape(B, T_in + T_out, -1)
+        print("h_full shape:", h_full.shape)
         l_vcr_term = l_vcr(h_full, self.alpha, self.beta)
 
         prediction_error = torch.mean((target_embed - hid)**2)
