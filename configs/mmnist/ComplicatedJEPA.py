@@ -11,7 +11,7 @@ aft_seq_length = 10
 pre_seq_length = 10
 total_length = 20
 hid_S = 32
-hid_T = 384
+hid_T = 256
 N_T = 4
 N_S = 4
 # training
