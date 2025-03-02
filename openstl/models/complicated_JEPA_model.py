@@ -91,7 +91,7 @@ class Complicated_JEPA_Model(nn.Module):
         x_target = x_raw_target.reshape(B*T_out, C, H, W)
 
         # Encode the input frames
-        embed, skip = self.enc(x_in)
+        embed, _ = self.enc(x_in)
         _, C_, H_, W_ = embed.shape
         # print("embed shape:", embed.shape)
 
@@ -101,7 +101,7 @@ class Complicated_JEPA_Model(nn.Module):
         # print("hid shape:", hid.shape)
 
         # Encode the target frames
-        target_embed, skip = self.enc(x_target)
+        target_embed, _ = self.enc(x_target)
         _, C_, H_, W_ = target_embed.shape
         z_target = target_embed.reshape(B, T_out, C_, H_, W_)
         # print("z_target shape:", z_target.shape)
@@ -116,13 +116,13 @@ class Complicated_JEPA_Model(nn.Module):
         prediction_error = torch.mean((z_target - hid)**2)
 
         hid = hid.reshape(B*T_in, C_, H_, W_) # Squeeze the bactch and time dimensions
-        Y = self.dec(hid, skip)
+        Y = self.dec(hid, None)
         Y = Y.reshape(B, T_out, C, H, W)
         # print("Y shape:", Y.shape)
 
-        decoder_errror = torch.mean((Y - x_raw_target)**2)
+        decoder_error = torch.mean((Y - x_raw_target)**2)
 
-        return Y, l_vcr_term + prediction_error + decoder_errror
+        return Y, l_vcr_term + prediction_error + decoder_error
     
 
 
