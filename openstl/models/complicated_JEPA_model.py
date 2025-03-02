@@ -91,7 +91,7 @@ class Complicated_JEPA_Model(nn.Module):
         x_target = x_raw_target.reshape(B*T_out, C, H, W)
 
         # Encode the input frames
-        embed, _ = self.enc(x_in)
+        embed, skip = self.enc(x_in)
         _, C_, H_, W_ = embed.shape
         # print("embed shape:", embed.shape)
 
@@ -117,7 +117,7 @@ class Complicated_JEPA_Model(nn.Module):
 
         hid = hid.reshape(B*T_in, C_, H_, W_) # Squeeze the bactch and time dimensions
 
-        skip = torch.zeros(B*T_in, C_, H_, W_, device=frames_tensor.device)
+        skip = torch.zeros_like(skip)
         Y = self.dec(hid, skip)
         Y = Y.reshape(B, T_out, C, H, W)
         # print("Y shape:", Y.shape)
