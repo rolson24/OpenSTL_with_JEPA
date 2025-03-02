@@ -52,7 +52,7 @@ class Complicated_JEPA_Model(nn.Module):
 
     """
 
-    def __init__(self, in_shape, pre_seq_length=3, aft_seq_length=10, hid_S=16, hid_T=256, N_S=4, N_T=4,
+    def __init__(self, in_shape, pre_seq_length=10, aft_seq_length=10, hid_S=16, hid_T=256, N_S=4, N_T=4,
                  mlp_ratio=8., drop=0.0, drop_path=0.0, spatio_kernel_enc=3,
                  spatio_kernel_dec=3, act_inplace=True, alpha=0.1, beta=0.1,  **kwargs):
         super(Complicated_JEPA_Model, self).__init__()
@@ -74,7 +74,7 @@ class Complicated_JEPA_Model(nn.Module):
         # model_type = 'gsta' if model_type is None else model_type.lower()
         model_type='swin'
 
-        self.hid = MidMetaNet(self.in_frames*hid_S, hid_T, self.out_frames,
+        self.hid = MidMetaNet(self.in_frames*hid_S, hid_T, N_T,
                 input_resolution=(H, W), model_type=model_type,
                 mlp_ratio=mlp_ratio, drop=drop, drop_path=drop_path)
 
