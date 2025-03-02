@@ -10,8 +10,8 @@ lrt_decoder = 0.01
 aft_seq_length = 10
 pre_seq_length = 10
 total_length = 20
-hid_S = 16
-hid_T = 384
+hid_S = 32
+hid_T = 128
 N_T = 4
 N_S = 4
 # training
