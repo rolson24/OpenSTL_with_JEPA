@@ -63,7 +63,7 @@ class BouncingShapesDataset(Dataset):
         self.n_frames_total = self.n_frames_input + self.n_frames_output
         self.transform = transform
         self.use_augment = use_augment
-        # self.background = 'cifar' in data_name
+        self.background = 'cifar' in data_name
         # For generating data
         self.image_size_ = image_size
         self.digit_size_ = 28
