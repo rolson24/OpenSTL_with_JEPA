@@ -79,7 +79,7 @@ class MovingMNISTJEPAEncoder(nn.Module):
 # influences the top linear layer of the Predictor, which can be one of 5 options based on the value of z. In
 # other words, the active component in z selects the last linear layer of the Predictor.
 class MovingMNISTJEPAPredictor(nn.Module):
-    def __init__(self, in_channels=1024, in_frames=3, out_channels=1024, out_frames=12, hidden_size=2048, latent_vector_mode=1, latent_vector_size=5):
+    def __init__(self, in_channels=128, in_frames=3, out_channels=128, out_frames=12, hidden_size=256, latent_vector_mode=1, latent_vector_size=5):
         super(MovingMNISTJEPAPredictor, self).__init__()
 
         self.latent_vector_mode = latent_vector_mode
@@ -95,7 +95,7 @@ class MovingMNISTJEPAPredictor(nn.Module):
         self.in_size = in_channels * in_frames
         self.out_size = out_channels * out_frames
 
-        self.hidden_size = hidden_size
+        self.hidden_size = in_channels * 2
         
         # 2 hidden layers
         self.fc1 = nn.Linear(self.in_size, self.hidden_size)
