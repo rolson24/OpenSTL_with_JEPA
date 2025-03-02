@@ -69,7 +69,7 @@ class Complicated_JEPA_Model(nn.Module):
         # model_type = 'gsta' if model_type is None else model_type.lower()
         model_type='swin'
 
-        self.hid = MidMetaNet(T*hid_S, hid_T, N_T,
+        self.hid = MidMetaNet(self.in_frames*hid_S, hid_T, N_T,
                 input_resolution=(H, W), model_type=model_type,
                 mlp_ratio=mlp_ratio, drop=drop, drop_path=drop_path)
 
