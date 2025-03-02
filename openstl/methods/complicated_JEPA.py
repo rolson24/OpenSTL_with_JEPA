@@ -30,6 +30,8 @@ class Bounching_Shapes_Complicated_JEPA(Base_method):
         # print("batch_x: ", batch_x.shape)
         # print("batch_y: ", batch_y.shape)
         # Concatenate the input and output tensors
+        print("batch_x: ", batch_x.shape)
+        print("batch_y: ", batch_y.shape)
         ims = torch.cat([batch_x, batch_y], dim=1).contiguous()
         # If there is a decoder, it should be called here
         # if self.hparams.train_decoder:

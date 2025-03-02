@@ -104,6 +104,7 @@ class Complicated_JEPA_Model(nn.Module):
         target_embed, skip = self.enc(x_target)
         _, C_, H_, W_ = target_embed.shape
         z_target = target_embed.reshape(B, T_out, C_, H_, W_)
+        print("z_target shape:", z_target.shape)
 
         # Compute the VCR loss
         h_full = torch.cat([z, z_target], dim=1) # Concatenate the hidden states along the time dimension
