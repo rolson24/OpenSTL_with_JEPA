@@ -77,11 +77,13 @@ class Complicated_JEPA_Model(nn.Module):
         x_raw_input = frames_tensor[:, :self.in_frames]
         x_raw_target = frames_tensor[:, self.in_frames:self.in_frames+self.out_frames]
 
-        B, T, C, H, W = x_raw_input.shape
-        x_in = x_raw_input.reshape(B*T, C, H, W)
+        B, T_in, C, H, W = x_raw_input.shape
+        print("x_raw_input shape:", x_raw_input.shape)
+        x_in = x_raw_input.reshape(B*T_in, C, H, W)
 
-        B, T, C, H, W = x_raw_target.shape
-        x_target = x_raw_target.reshape(B*T, C, H, W)
+        B, T_out, C, H, W = x_raw_target.shape
+        print("x_raw_target shape:", x_raw_target.shape)
+        x_target = x_raw_target.reshape(B*T_out, C, H, W)
 
         # Encode the input frames
         embed, skip = self.enc(x_in)
@@ -89,9 +91,9 @@ class Complicated_JEPA_Model(nn.Module):
         print("embed shape:", embed.shape)
 
         # Predict the next frames
-        z = embed.view(B, T, C_, H_, W_)
+        z = embed.view(B, T_in, C_, H_, W_)
         hid = self.hid(z)
-        hid = hid.reshape(B*T, C_, H_, W_) # Squeeze the bactch and time dimensions
+        hid = hid.reshape(B*T_in, C_, H_, W_) # Squeeze the bactch and time dimensions
 
         # Encode the target frames
         target_embed, skip = self.enc(x_target)
