@@ -220,4 +220,11 @@ dataset_parameters = {
         'data_name': 'vil', 
         'metrics': ['mse', 'mae', 'pod', 'sucr', 'csi', 'lpips'],
     },
+    'bouncing_shapes': {
+        'in_shape': [10, 1, 64, 64],
+        'pre_seq_length': 10,
+        'aft_seq_length': 10,
+        'total_length': 20,
+        'metrics': ['mse', 'mae', 'ssim', 'psnr'],
+    },
 }
