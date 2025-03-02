@@ -10,10 +10,10 @@ lrt_decoder = 0.01
 aft_seq_length = 10
 pre_seq_length = 10
 total_length = 20
-hid_S = 64
-hid_T = 32
-N_T = 4
-N_S = 8
+# hid_S = 64
+# hid_T = 32
+# N_T = 4
+# N_S = 8
 # training
 lr = 1e-4
 batch_size = 16
