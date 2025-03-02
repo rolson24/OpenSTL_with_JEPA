@@ -83,34 +83,34 @@ class Complicated_JEPA_Model(nn.Module):
         x_raw_target = frames_tensor[:, self.in_frames:self.in_frames+self.out_frames]
 
         B, T_in, C, H, W = x_raw_input.shape
-        print("x_raw_input shape:", x_raw_input.shape)
+        # print("x_raw_input shape:", x_raw_input.shape)
         x_in = x_raw_input.reshape(B*T_in, C, H, W)
 
         B, T_out, C, H, W = x_raw_target.shape
-        print("x_raw_target shape:", x_raw_target.shape)
+        # print("x_raw_target shape:", x_raw_target.shape)
         x_target = x_raw_target.reshape(B*T_out, C, H, W)
 
         # Encode the input frames
         embed, skip = self.enc(x_in)
         _, C_, H_, W_ = embed.shape
-        print("embed shape:", embed.shape)
+        # print("embed shape:", embed.shape)
 
         # Predict the next frames
         z = embed.view(B, T_in, C_, H_, W_)
         hid = self.hid(z)
-        print("hid shape:", hid.shape)
+        # print("hid shape:", hid.shape)
 
         # Encode the target frames
         target_embed, skip = self.enc(x_target)
         _, C_, H_, W_ = target_embed.shape
         z_target = target_embed.reshape(B, T_out, C_, H_, W_)
-        print("z_target shape:", z_target.shape)
+        # print("z_target shape:", z_target.shape)
 
         # Compute the VCR loss
         h_full = torch.cat([z, z_target], dim=1) # Concatenate the hidden states along the time dimension
         # Flatten the last 3 dimensions
         h_full = h_full.reshape(B, T_in + T_out, -1)
-        print("h_full shape:", h_full.shape)
+        # print("h_full shape:", h_full.shape)
         l_vcr_term = l_vcr(h_full, self.alpha, self.beta)
 
         prediction_error = torch.mean((z_target - hid)**2)
@@ -118,7 +118,7 @@ class Complicated_JEPA_Model(nn.Module):
         hid = hid.reshape(B*T_in, C_, H_, W_) # Squeeze the bactch and time dimensions
         Y = self.dec(hid, skip)
         Y = Y.reshape(B, T_out, C, H, W)
-        print("Y shape:", Y.shape)
+        # print("Y shape:", Y.shape)
 
         decoder_errror = torch.mean((Y - x_raw_target)**2)
 
