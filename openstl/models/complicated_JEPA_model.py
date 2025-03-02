@@ -54,7 +54,7 @@ class Complicated_JEPA_Model(nn.Module):
 
     def __init__(self, in_shape, pre_seq_length=3, aft_seq_length=10, hid_S=16, hid_T=256, N_S=4, N_T=4,
                  mlp_ratio=8., drop=0.0, drop_path=0.0, spatio_kernel_enc=3,
-                 spatio_kernel_dec=3, act_inplace=True,  **kwargs):
+                 spatio_kernel_dec=3, act_inplace=True, alpha=0.1, beta=0.1,  **kwargs):
         super(Complicated_JEPA_Model, self).__init__()
         T, C, H, W = in_shape  # T is pre_seq_length
         H, W = int(H / 2**(N_S/2)), int(W / 2**(N_S/2))  # downsample 1 / 2**(N_S/2)
@@ -62,6 +62,11 @@ class Complicated_JEPA_Model(nn.Module):
 
         self.in_frames = pre_seq_length
         self.out_frames = aft_seq_length
+
+        self.alpha = alpha
+        self.beta = beta
+        print("alpha:", alpha)
+        print("beta:", beta)
 
         self.enc = Encoder(C, hid_S, N_S, spatio_kernel_enc, act_inplace=act_inplace)
         self.dec = Decoder(hid_S, C, N_S, spatio_kernel_dec, act_inplace=act_inplace)
@@ -102,7 +107,7 @@ class Complicated_JEPA_Model(nn.Module):
 
 
         h_full = torch.cat([z, z_target], dim=1) # Concatenate the hidden states along the time dimension
-        l_vcr_term = l_vcr(h_full, self.configs['alpha'], self.configs['beta'])
+        l_vcr_term = l_vcr(h_full, self.alpha, self.beta)
 
         prediction_error = torch.mean((target_embed - hid)**2)
 
@@ -129,7 +134,7 @@ if __name__ == "__main__":
         'lrt_z': 1,
         'tolerance': 1e-6,
         'alpha': 0.1,
-        'beta': 0.1,
+        'beta': 0.01,
         'train_decoder': True,
         'lrt_decoder': 0.01
     }
