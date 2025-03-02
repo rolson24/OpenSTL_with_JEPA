@@ -1,7 +1,7 @@
 method = 'simple_mnist_jepa'
 # model
 # in_shape = [3, 3, 32, 32]
-embed_dim = 128
+embed_dim = 512
 latent_tensor_mode = 0
 latent_tensor_size = 20
 sparsity_reg = 0.2
