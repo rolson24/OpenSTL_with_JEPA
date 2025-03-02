@@ -14,8 +14,8 @@ class Bounching_Shapes_Complicated_JEPA(Base_method):
     def _build_model(self, **args):
         print("args: ", args)
         print("hparams: ", self.hparams)
-        configs = args['configs']
-        return Complicated_JEPA_Model(configs=configs, **args)
+        # configs = args['configs']
+        return Complicated_JEPA_Model(**args)
 
     def _get_constraints(self):
         constraints = torch.zeros((49, 7, 7))
