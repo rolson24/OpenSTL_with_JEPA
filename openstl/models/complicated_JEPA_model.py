@@ -86,6 +86,7 @@ class Complicated_JEPA_Model(nn.Module):
         # Encode the input frames
         embed, skip = self.enc(x_in)
         _, C_, H_, W_ = embed.shape
+        print("embed shape:", embed.shape)
 
         # Predict the next frames
         z = embed.view(B, T, C_, H_, W_)
