@@ -77,7 +77,7 @@ class BouncingShapesDataset(Dataset):
     def __getitem__(self, idx):
         length = self.n_frames_input + self.n_frames_output
         images = self.dataset[:, idx, ...]
-        labels = self.labels[:, idx, ...]
+        # labels = self.labels[:, idx, ...]
 
         if not self.background:
             r, w = 1, self.image_size_
@@ -95,7 +95,7 @@ class BouncingShapesDataset(Dataset):
         output = torch.from_numpy(output / 255.0).contiguous().float()
         input = torch.from_numpy(input / 255.0).contiguous().float()
 
-        labels = torch.from_numpy(labels)
+        # labels = torch.from_numpy(labels)
 
         if self.use_augment:
             imgs = self._augment_seq(torch.cat([input, output], dim=0), crop_scale=0.94)
@@ -103,7 +103,7 @@ class BouncingShapesDataset(Dataset):
             output = imgs[self.n_frames_input:self.n_frames_input+self.n_frames_output, ...]
         
 
-        return input, output, labels
+        return input, output
 
     def __len__(self):
         return self.length
