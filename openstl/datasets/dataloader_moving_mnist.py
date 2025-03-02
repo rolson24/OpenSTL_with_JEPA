@@ -142,7 +142,7 @@ class MovingMNIST(Dataset):
         # Scale to the size of the canvas.
         start_y = (canvas_size * start_y).astype(np.int32)
         start_x = (canvas_size * start_x).astype(np.int32)
-        return start_y, start_x, velocity
+        return start_y, start_x
 
     def generate_moving_mnist(self, num_digits=2, background=False):
         '''
