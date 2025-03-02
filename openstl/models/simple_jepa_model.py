@@ -144,7 +144,7 @@ class SimpleJEPA_Model(nn.Module):
 
         if configs['train_decoder']:
             # Now create a decoder that will take the output of the predictor to generate the next frames
-            self.decoder = MovingMNISTJEPADecoder(in_channels=configs['embed_dim'], image_size=H)
+            self.decoder = MovingMNISTJEPADecoder(in_channels=configs['embed_dim'], image_size=H, out_channels=C)
             self.decoder_opt = torch.optim.Adam(self.decoder.parameters(), lr=configs['lrt_decoder'])
         else:
             self.decoder = None

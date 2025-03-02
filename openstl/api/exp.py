@@ -97,6 +97,8 @@ class BaseExperiment(object):
     def test(self):
         if self.args.test == True:
             ckpt = torch.load(osp.join(self.save_dir, 'checkpoints', 'best.ckpt'))
+            print(f'Loading the best checkpoint from {self.save_dir}')
+            print(f'State dict keys: {ckpt['state_dict'].keys()}')
             self.method.load_state_dict(ckpt['state_dict'])
         self.trainer.test(self.method, self.data)
     
