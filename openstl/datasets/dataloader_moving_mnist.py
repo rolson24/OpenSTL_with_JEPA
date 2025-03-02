@@ -157,7 +157,7 @@ class MovingMNIST(Dataset):
             data = np.repeat(back[np.newaxis, ...], self.n_frames_total, axis=0).astype(np.uint8)
         for n in range(num_digits):
             # Trajectory
-            start_y, start_x, velocity = self.get_random_trajectory(self.n_frames_total)
+            start_y, start_x = self.get_random_trajectory(self.n_frames_total)
             ind = random.randint(0, self.mnist.shape[0] - 1)
             digit_image = self.mnist[ind].copy()
             if background:  # binary {0, 255}
