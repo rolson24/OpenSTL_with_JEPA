@@ -51,9 +51,9 @@ class BouncingShapesDataset(Dataset):
         self.is_train = is_train
         self.data_name = data_name
         if self.is_train:
-            self.dataset, self.labels = load_fixed_set(root, 'bounce_shapes_train')
+            self.dataset, self.labels = load_fixed_set(root, 'bouncing_shapes_train')
         else:
-            self.dataset, self.labels = load_fixed_set(root, 'bounce_shapes_test')
+            self.dataset, self.labels = load_fixed_set(root, 'bouncing_shapes_test')
 
         self.length = int(1e4) if self.dataset is None else self.dataset.shape[1]
 
