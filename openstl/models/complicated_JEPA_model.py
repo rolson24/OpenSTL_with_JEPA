@@ -98,7 +98,7 @@ class Complicated_JEPA_Model(nn.Module):
         # Encode the target frames
         target_embed, skip = self.enc(x_target)
         _, C_, H_, W_ = target_embed.shape
-        z_target = target_embed.reshape(B, T, C_, H_, W_)
+        z_target = target_embed.reshape(B, T_out, C_, H_, W_)
 
 
         h_full = torch.cat([z, z_target], dim=1) # Concatenate the hidden states along the time dimension

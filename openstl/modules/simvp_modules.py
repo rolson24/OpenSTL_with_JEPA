@@ -441,6 +441,7 @@ class SwinSubBlock(SwinTransformerBlock):
 
     def forward(self, x):
         B, C, H, W = x.shape
+        print("SwinSubBlock x shape:", x.shape)
         x = x.flatten(2).transpose(1, 2)
         x = self.norm1(x)
         x = x.view(B, H, W, C)
