@@ -143,7 +143,7 @@ if __name__ == "__main__":
     }
     model = Complicated_JEPA_Model(**configs)
     # Create some dummy data
-    frames_tensor = torch.randn(2, 15, 1, 64, 64) # (B, T, C, H, W)
+    frames_tensor = torch.randn(2, 20, 1, 64, 64) # (B, T, C, H, W)
     latent_tensor = torch.randn(2, 20) # (B, latent_tensor_size) Doesn't matter what the size is for mode 2
     # mask_true = torch.randn(2, 5, 1, 64, 64)
     # Run the model
