@@ -107,7 +107,7 @@ class BaseExperiment(object):
             assign_gpu = 'cuda:' + (str(args.gpus[0]) if len(args.gpus) == 1 else '0')
             device = torch.device(assign_gpu)
         T, C, H, W = args.in_shape
-        if args.method in ['simvp', 'tau', 'mmvp', 'wast', 'complicated_jepa']:
+        if args.method in ['simvp', 'tau', 'mmvp', 'wast']:
             input_dummy = torch.ones(1, args.pre_seq_length, C, H, W).to(device)
         elif args.method == 'phydnet':
             _tmp_input1 = torch.ones(1, args.pre_seq_length, C, H, W).to(device)
@@ -136,6 +136,10 @@ class BaseExperiment(object):
             input_dummy = torch.cat((input_dummy, output_dummy), dim=1)
             latent_dummy = torch.ones(1, args.pre_seq_length, args.latent_tensor_size).to(device)
             input_dummy = (input_dummy, latent_dummy)
+        elif args.method == 'complicated_jepa':
+            input_dummy = torch.ones(1, args.pre_seq_length, C, H, W).to(device)
+            output_dummy = torch.ones(1, args.aft_seq_length, C, H, W).to(device)
+            input_dummy = torch.cat((input_dummy, output_dummy), dim=1)
         else:
             raise ValueError(f'Invalid method name {args.method}')
 
