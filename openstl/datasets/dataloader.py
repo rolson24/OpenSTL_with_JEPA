@@ -51,5 +51,9 @@ def load_data(dataname, batch_size, val_batch_size, num_workers, data_root, dist
         from .dataloader_sevir import load_data
         cfg_dataloader['data_name'] = kwargs.get('data_name', 'sevir')
         return load_data(batch_size, val_batch_size, data_root, num_workers, **cfg_dataloader)
+    elif dataname == 'bouncing_shapes':
+        from .dataloader_bouncing_shapes import load_data
+        cfg_dataloader['data_name'] = kwargs.get('data_name', 'bouncing_shapes')
+        return load_data(batch_size, val_batch_size, data_root, num_workers, **cfg_dataloader)
     else:
         raise ValueError(f'Dataname {dataname} is unsupported')
