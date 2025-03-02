@@ -128,7 +128,7 @@ class Complicated_JEPA_Model(nn.Module):
 if __name__ == "__main__":
     # Create a simple model
     configs = {
-        'in_shape': (15, 1, 64, 64), # (T, C, H, W)
+        'in_shape': (20, 1, 64, 64), # (T, C, H, W)
         'embed_dim': 64,
         'latent_tensor_mode': 2, # ISTA
         'latent_tensor_size': 20,
