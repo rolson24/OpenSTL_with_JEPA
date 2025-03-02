@@ -19,14 +19,14 @@ def load_fixed_set(root, data_name='bouncing_shapes_train'):
         'bouncing_shapes_test': 'bouncing_shapes/bouncing_shapes_test_seq.npy',
     }
     label_file_map = {
-        'bouncing_shapes_train': 'bouncing_shapes/bouncing_shapes_train_label   .npy',
+        'bouncing_shapes_train': 'bouncing_shapes/bouncing_shapes_train_label.npy',
         'bouncing_shapes_test': 'bouncing_shapes/bouncing_shapes_test_label.npy',
     }
     path = os.path.join(root, img_file_map[data_name])
-    img_dataset = np.load(path)
+    img_dataset = np.load(path, allow_pickle=True)
     img_dataset = img_dataset[..., np.newaxis]
 
-    label_data = np.load(os.path.join(root, label_file_map[data_name]))
+    label_data = np.load(os.path.join(root, label_file_map[data_name]), allow_pickle=True)
     return img_dataset, label_data
 
 
@@ -42,7 +42,7 @@ class BouncingShapes(Dataset):
         use_augment (bool): Whether to use augmentations (defaults to False).
     """
 
-    def __init__(self, root, is_train=True, data_name='mnist',
+    def __init__(self, root, is_train=True, data_name='bouncing_shapes',
                  n_frames_input=10, n_frames_output=10, image_size=64,
                  num_objects=[2], transform=None, use_augment=False):
         super(BouncingShapes, self).__init__()
@@ -63,7 +63,7 @@ class BouncingShapes(Dataset):
         self.n_frames_total = self.n_frames_input + self.n_frames_output
         self.transform = transform
         self.use_augment = use_augment
-        self.background = 'cifar' in data_name
+        # self.background = 'cifar' in data_name
         # For generating data
         self.image_size_ = image_size
         self.digit_size_ = 28
@@ -72,102 +72,7 @@ class BouncingShapes(Dataset):
         self.mean = 0
         self.std = 1
 
-    # def get_random_trajectory(self, seq_length):
-    #     ''' Generate a random sequence of a MNIST digit '''
-    #     canvas_size = self.image_size_ - self.digit_size_
-    #     x = random.random()
-    #     y = random.random()
-    #     theta = random.random() * 2 * np.pi
 
-    #     v_ys = [np.sin(theta)] * seq_length
-    #     v_xs = [np.cos(theta)] * seq_length
-
-    #     start_y = np.zeros(seq_length)
-    #     start_x = np.zeros(seq_length)
-    #     bounce_x = 1
-    #     bounce_y = 1
-    #     for i, v_x, v_y in zip(range(seq_length), v_xs, v_ys):
-    #         # Take a step along velocity.
-    #         y += bounce_y * v_y * self.step_length_
-    #         x += bounce_x * v_x * self.step_length_
-
-    #         # Bounce off edges.
-    #         if x <= 0:
-    #             x = 0
-    #             # v_x = -v_x
-    #             bounce_x = -bounce_x
-    #         if x >= 1.0:
-    #             x = 1.0
-    #             # v_x = -v_x
-    #             bounce_x = -bounce_x
-    #         if y <= 0:
-    #             y = 0
-    #             # v_y = -v_y
-    #             bounce_y = -bounce_y
-    #         if y >= 1.0:
-    #             y = 1.0
-    #             # v_y = -v_y
-    #             bounce_y = -bounce_y
-    #         start_y[i] = y
-    #         start_x[i] = x
-
-    #     # Scale to the size of the canvas.
-    #     start_y = (canvas_size * start_y).astype(np.int32)
-    #     start_x = (canvas_size * start_x).astype(np.int32)
-    #     return start_y, start_x, velocity
-
-    # def generate_moving_mnist(self, num_digits=2, background=False):
-    #     '''
-    #     Get random trajectories for the digits and generate a video.
-    #     '''
-    #     if not background:  # `black`
-    #         data = np.zeros((self.n_frames_total, self.image_size_,
-    #                         self.image_size_), dtype=np.float32)
-    #     else:  # cifar-10 as the background
-    #         ind = random.randint(0, self.cifar.shape[0] - 1)
-    #         back = cv2.resize(self.cifar[ind], (self.image_size_, self.image_size_), interpolation=cv2.INTER_CUBIC)
-    #         data = np.repeat(back[np.newaxis, ...], self.n_frames_total, axis=0).astype(np.uint8)
-    #     for n in range(num_digits):
-    #         # Trajectory
-    #         start_y, start_x, velocity = self.get_random_trajectory(self.n_frames_total)
-    #         ind = random.randint(0, self.mnist.shape[0] - 1)
-    #         digit_image = self.mnist[ind].copy()
-    #         if background:  # binary {0, 255}
-    #             digit_image[digit_image > 1] = 255
-    #         for i in range(self.n_frames_total):
-    #             top = start_y[i]
-    #             left = start_x[i]
-    #             bottom = top + self.digit_size_
-    #             right = left + self.digit_size_
-    #             # Draw digit
-    #             if not background:
-    #                 data[i, top:bottom, left:right] = np.maximum(
-    #                     data[i, top:bottom, left:right], digit_image)
-    #             else:
-    #                 data[i, top:bottom, left:right, ...] = np.maximum(
-    #                     data[i, top:bottom, left:right, ...], np.repeat(digit_image[..., np.newaxis], 3, axis=2))
-
-    #     if not background:
-    #         data = data[..., np.newaxis]
-    #     return data
-
-    # def _augment_seq(self, imgs, crop_scale=0.94):
-    #     """Augmentations for video"""
-    #     _, _, h, w = imgs.shape  # original shape, e.g., [10, 1, 64, 64]
-    #     imgs = F.interpolate(imgs, scale_factor=1 / crop_scale, mode='bilinear')
-    #     _, _, ih, iw = imgs.shape
-    #     # Random Crop
-    #     x = np.random.randint(0, ih - h + 1)
-    #     y = np.random.randint(0, iw - w + 1)
-    #     imgs = imgs[:, :, x:x+h, y:y+w]
-    #     # Random Flip
-    #     if random.randint(-2, 1):
-    #         imgs = torch.flip(imgs, dims=(2,3))  # rotation 180
-    #     elif random.randint(-2, 1):
-    #         imgs = torch.flip(imgs, dims=(2, ))  # vertical flip
-    #     elif random.randint(-2, 1):
-    #         imgs = torch.flip(imgs, dims=(3, ))  # horizontal flip
-    #     return imgs
 
     def __getitem__(self, idx):
         length = self.n_frames_input + self.n_frames_output
@@ -204,7 +109,7 @@ class BouncingShapes(Dataset):
         return self.length
 
 
-def load_data(batch_size, val_batch_size, data_root, num_workers=4, data_name='mnist',
+def load_data(batch_size, val_batch_size, data_root, num_workers=4, data_name='bouncing_shapes',
               pre_seq_length=10, aft_seq_length=10, in_shape=[10, 1, 64, 64],
               distributed=False, use_augment=False, use_prefetcher=False, drop_last=False):
 
@@ -247,7 +152,7 @@ if __name__ == '__main__':
                   val_batch_size=4,
                   data_root='../../data/',
                   num_workers=4,
-                  data_name='mnist',
+                  data_name='bouncing_shapes',
                   pre_seq_length=10, aft_seq_length=10,
                   distributed=True, use_prefetcher=False)
 
