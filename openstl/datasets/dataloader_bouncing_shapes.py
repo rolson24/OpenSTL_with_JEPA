@@ -79,7 +79,7 @@ class BouncingShapesDataset(Dataset):
         images = self.dataset[:, idx, ...]
         labels = self.labels[:, idx, ...]
 
-        # print(f"labels: {self.labels[:, idx]}")
+        print(f"labels: {self.labels[:, idx]}")
 
         if not self.background:
             r, w = 1, self.image_size_
