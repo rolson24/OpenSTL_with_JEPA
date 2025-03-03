@@ -34,7 +34,7 @@ class Bounching_Shapes_Complicated_JEPA(Base_method):
                 ind +=1
         return constraints 
 
-    def on_load_checkpoint(self, checkpoint):
+    def load_state_dict(self, checkpoint, strict):
         # Load the state dictionary with strict=False
         self.model.load_state_dict(checkpoint['state_dict'], strict=False)
 
