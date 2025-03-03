@@ -97,8 +97,8 @@ class BouncingShapesDataset(Dataset):
 
         # map the 0th label to be 'triangle'->0, 'circle'->1, 'rectangle'->2
         labels[:, 0] = np.array([0 if x == 'triangle' else 1 if x == 'circle' else 2 for x in labels[:, 0]])
-        print("labels: ", labels.shape)
-        print(f"labels: {labels}")
+        # print("labels: ", labels.shape)
+        # print(f"labels: {labels}")
 
         # Ensure labels are of a supported type
         labels = labels.astype(np.float32)
