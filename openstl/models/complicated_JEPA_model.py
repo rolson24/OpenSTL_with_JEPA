@@ -168,7 +168,7 @@ class Complicated_JEPA_Model(nn.Module):
 
         # Linear probe
         linear_output = self.linear_head(hid)
-        # print("linear_output shape:", linear_output.shape)
+        print("linear_output shape:", linear_output.shape)
         
         # Compute the mse loss for the linear probe (each channel is a seperate output) 
         loss = F.mse_loss(linear_output, labels, reduction='mean')
