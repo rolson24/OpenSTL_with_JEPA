@@ -40,8 +40,8 @@ class Bounching_Shapes_Complicated_JEPA(Base_method):
         # checkpoint = torch.load(checkpoint)
         self.model.load_state_dict(checkpoint, strict=False)
     
-    def load_optimizer_state_dict(self, checkpoint):
-        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'], strict=False)
+    # def load_optimizer_state_dict(self, checkpoint):
+    #     self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'], strict=False)
 
     def forward(self, batch_x, batch_y, **kwargs):
         # print("batch_x: ", batch_x.shape)

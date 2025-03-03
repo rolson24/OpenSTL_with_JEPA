@@ -93,7 +93,10 @@ class BaseExperiment(object):
 
     def train(self):
         torch.set_float32_matmul_precision("allow")
-        self.trainer.fit(self.method, self.data, ckpt_path=self.args.ckpt_path if self.args.ckpt_path else None)
+        ckpt = torch.load(osp.join(self.save_dir, 'checkpoints', 'best.ckpt'))
+        self.method.load_state_dict(ckpt['state_dict'], strict=False)
+        # self.trainer.fit(self.method, self.data, ckpt_path=self.args.ckpt_path if self.args.ckpt_path else None)
+        self.trainer.fit(self.method, self.data)
 
     def test(self):
         if self.args.test == True:
