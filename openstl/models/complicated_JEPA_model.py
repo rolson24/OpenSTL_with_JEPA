@@ -174,6 +174,8 @@ class Complicated_JEPA_Model(nn.Module):
 
         linear_output = torch.empty(B*T_in, 7)
 
+        loss = 0.0
+
         # Linear probe
         for i in range(7):
             linear_head = getattr(self, f"linear_head_{i}")
@@ -182,7 +184,7 @@ class Complicated_JEPA_Model(nn.Module):
             # print("labels shape:", labels.shape)
 
             # Compute the mse loss for the linear probe (each channel is a seperate output) 
-            loss = F.mse_loss(linear_output, labels[:, i], reduction='mean')
+            loss += F.mse_loss(linear_output, labels[:, i], reduction='mean')
             # print("loss:", loss)
 
         return linear_output, loss
