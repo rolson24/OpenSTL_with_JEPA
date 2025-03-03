@@ -79,8 +79,10 @@ class Complicated_JEPA_Model(nn.Module):
                 mlp_ratio=mlp_ratio, drop=drop, drop_path=drop_path)
         
         if train_linear_probe:
+            self.freeeze_encoder()
             # Linear probe to extract the position, velocity, rotation, and shape of the object in each frame
             self.linear_head = nn.Linear(hid_T, 7) # 7 outputs: 3 for position (x, y, theta), 3 for velocity (dx, dy, dtheta), 1 for the object shape
+
     
     def freeze_encoder(self):
         # Freeze the encoder
@@ -92,6 +94,14 @@ class Complicated_JEPA_Model(nn.Module):
         # Freeze the predictor
         for param in self.hid.parameters():
             param.requires_grad = False
+
+    def load_checkpoint(self, checkpoint_path):
+        checkpoint = torch.load(checkpoint_path)
+        model_dict = self.state_dict()
+        # Filter out linear probe layer if not in checkpoint
+        filtered_dict = {k: v for k, v in checkpoint.items() if k in model_dict and 'linear_head' not in k}
+        model_dict.update(filtered_dict)
+        self.load_state_dict(model_dict)
         
 
     def forward(self, frames_tensor, **kwargs):
@@ -191,6 +201,9 @@ if __name__ == "__main__":
         'lrt_decoder': 0.01
     }
     model = Complicated_JEPA_Model(**configs)
+    # Load checkpoint
+    checkpoint_path = 'path/to/checkpoint.pth'
+    model.load_checkpoint(checkpoint_path)
     # Create some dummy data
     frames_tensor = torch.randn(2, 20, 1, 64, 64) # (B, T, C, H, W)
     latent_tensor = torch.randn(2, 20) # (B, latent_tensor_size) Doesn't matter what the size is for mode 2
