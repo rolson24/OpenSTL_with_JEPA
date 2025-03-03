@@ -80,7 +80,7 @@ class Complicated_JEPA_Model(nn.Module):
         
         if train_linear_probe:
             num_outputs = 7
-            self.freeze_encoder()
+            # self.freeze_encoder()
             # Linear probe to extract the position, velocity, rotation, and shape of the object in each frame
             # One linear layer for each output
             for i in range(num_outputs):
@@ -150,6 +150,7 @@ class Complicated_JEPA_Model(nn.Module):
         return Y, l_vcr_term + prediction_error + decoder_error
 
     def forward_linear_probe(self, frames_tensor, labels):
+        self.freeze_encoder()
         x_raw_input = frames_tensor[:, :self.in_frames]
         labels = labels[:, self.in_frames:self.in_frames+self.out_frames]
 
