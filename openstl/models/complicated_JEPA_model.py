@@ -79,9 +79,13 @@ class Complicated_JEPA_Model(nn.Module):
                 mlp_ratio=mlp_ratio, drop=drop, drop_path=drop_path)
         
         if train_linear_probe:
+            num_outputs = 7
             self.freeze_encoder()
             # Linear probe to extract the position, velocity, rotation, and shape of the object in each frame
-            self.linear_head = nn.Linear(hid_S*4*4, 7) # 7 outputs: 3 for position (x, y, theta), 3 for velocity (dx, dy, dtheta), 1 for the object shape
+            # One linear layer for each output
+            for i in num_outputs:
+                setattr(self, f"linear_head_{i}", nn.Linear(hid_S*4*4, 1))
+            # self.linear_head = nn.Linear(hid_S*4*4, 7) # 7 outputs: 3 for position (x, y, theta), 3 for velocity (dx, dy, dtheta), 1 for the object shape
 
     
     def freeze_encoder(self):
@@ -148,6 +152,7 @@ class Complicated_JEPA_Model(nn.Module):
     def forward_linear_probe(self, frames_tensor, labels):
         x_raw_input = frames_tensor[:, :self.in_frames]
         labels = labels[:, self.in_frames:self.in_frames+self.out_frames]
+        labels = labels.reshape(B*T_in, -1)
 
         B, T_in, C, H, W = x_raw_input.shape
         # print("x_raw_input shape:", x_raw_input.shape)
@@ -167,18 +172,19 @@ class Complicated_JEPA_Model(nn.Module):
         hid = hid.reshape(B*T_in, C_*H_*W_)
         # print("hid shape:", hid.shape)
 
-        # Linear probe
-        linear_output = self.linear_head(hid)
-        # print("linear_output shape:", linear_output.shape)
-        # print("labels shape:", labels.shape)
+        linear_output = torch.empty(B*T_in, 7)
 
-        # Reshape the labels
-        labels = labels.reshape(B*T_in, -1)
-        # print("labels shape:", labels)
-        
-        # Compute the mse loss for the linear probe (each channel is a seperate output) 
-        loss = F.mse_loss(linear_output, labels, reduction='mean')
-        # print("loss:", loss)
+        # Linear probe
+        for i in range(7):
+            linear_head = getattr(self, f"linear_head_{i}")
+            linear_output[:,i] = linear_head(hid)
+            # print("linear_output shape:", linear_output.shape)
+            # print("labels shape:", labels.shape)
+
+            # Compute the mse loss for the linear probe (each channel is a seperate output) 
+            loss = F.mse_loss(linear_output, labels[:, i], reduction='mean')
+            # print("loss:", loss)
+
         return linear_output, loss
 
 
