@@ -79,8 +79,6 @@ class BouncingShapesDataset(Dataset):
         images = self.dataset[:, idx, ...]
         labels = self.labels[:, idx, ...]
 
-        print(f"labels: {self.labels[:, idx]}")
-
         if not self.background:
             r, w = 1, self.image_size_
             images = images.reshape((length, w, r, w, r)).transpose(
@@ -100,6 +98,8 @@ class BouncingShapesDataset(Dataset):
         # map the 0th label to be 'triangle'->0, 'circle'->1, 'rectangle'->2
         labels[:, 0] = np.array([0 if x == 'triangle' else 1 if x == 'circle' else 2 for x in labels[:, 0]])
         print("labels: ", labels.shape)
+        print(f"labels: {labels}")
+
 
         labels = torch.from_numpy(labels)
 
