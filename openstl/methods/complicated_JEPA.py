@@ -66,12 +66,15 @@ class Bounching_Shapes_Complicated_JEPA(Base_method):
         return loss
     
     def validation_step(self, batch, batch_idx):
-        batch_x, batch_y = batch
+        batch_x, batch_y, labels = batch
         # print("batch_x: ", batch_x.shape)
         # print("batch_y: ", batch_y.shape)
-        # Concatenate the input and output tensors
-        ims = torch.cat([batch_x, batch_y], dim=1).contiguous()
-        pred_y, loss = self.model(ims)
+        if self.train_linear_probe:
+            pred_labels, loss = self.model.forward_linear_probe(batch_x, labels)
+        else:
+            # Concatenate the input and output tensors
+            ims = torch.cat([batch_x, batch_y], dim=1).contiguous()
+            pred_y, loss = self.model(ims)
 
         # print(f"loss: {loss}")
 
