@@ -173,14 +173,16 @@ class Complicated_JEPA_Model(nn.Module):
         hid = hid.reshape(B*T_in, C_*H_*W_)
         # print("hid shape:", hid.shape)
 
-        linear_output = torch.empty(B*T_in, 7)
+        linear_outputs = []
 
         loss = 0.0
 
         # Linear probe
         for i in range(7):
             linear_head = getattr(self, f"linear_head_{i}")
-            linear_output[:,i] = linear_head(hid)
+            
+            linear_output = linear_head(hid)
+            linear_outputs.append(linear_output)
             # print("linear_output shape:", linear_output.shape)
             # print("labels shape:", labels.shape)
 
@@ -188,7 +190,9 @@ class Complicated_JEPA_Model(nn.Module):
             loss += F.mse_loss(linear_output, labels[:, i], reduction='mean')
             # print("loss:", loss)
 
-        return linear_output, loss
+        linear_outputs = torch.stack(linear_outputs, dim=1)
+
+        return linear_outputs, loss
 
 
 # Test that the model runs
