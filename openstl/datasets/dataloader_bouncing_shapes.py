@@ -79,6 +79,8 @@ class BouncingShapesDataset(Dataset):
         images = self.dataset[:, idx, ...]
         labels = self.labels[:, idx, ...]
 
+        print(f"labels: {labels[:,idx, ...]}")
+
         if not self.background:
             r, w = 1, self.image_size_
             images = images.reshape((length, w, r, w, r)).transpose(
