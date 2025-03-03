@@ -81,7 +81,7 @@ class Complicated_JEPA_Model(nn.Module):
         if train_linear_probe:
             self.freeze_encoder()
             # Linear probe to extract the position, velocity, rotation, and shape of the object in each frame
-            self.linear_head = nn.Linear(hid_T, 7) # 7 outputs: 3 for position (x, y, theta), 3 for velocity (dx, dy, dtheta), 1 for the object shape
+            self.linear_head = nn.Linear(hid_S*4*4, 7) # 7 outputs: 3 for position (x, y, theta), 3 for velocity (dx, dy, dtheta), 1 for the object shape
 
     
     def freeze_encoder(self):
