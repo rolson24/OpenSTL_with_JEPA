@@ -77,6 +77,21 @@ class Complicated_JEPA_Model(nn.Module):
         self.hid = MidMetaNet(self.in_frames*hid_S, hid_T, N_T,
                 input_resolution=(H, W), model_type=model_type,
                 mlp_ratio=mlp_ratio, drop=drop, drop_path=drop_path)
+        
+        # Linear probe to extract the position, velocity, rotation, and shape of the object in each frame
+        self.linear_head = nn.Linear(hid_T, 7) # 7 outputs: 3 for position (x, y, theta), 3 for velocity (dx, dy, dtheta), 1 for the object shape
+    
+    def freeze_encoder(self):
+        # Freeze the encoder
+        for param in self.enc.parameters():
+            param.requires_grad = False
+        # Freeze the decoder
+        for param in self.dec.parameters():
+            param.requires_grad = False
+        # Freeze the predictor
+        for param in self.hid.parameters():
+            param.requires_grad = False
+        
 
     def forward(self, frames_tensor, **kwargs):
         x_raw_input = frames_tensor[:, :self.in_frames]
@@ -98,7 +113,7 @@ class Complicated_JEPA_Model(nn.Module):
         # Predict the next frames
         z = embed.view(B, T_in, C_, H_, W_)
         hid = self.hid(z)
-        # print("hid shape:", hid.shape)
+        print("hid shape:", hid.shape)
 
         # Encode the target frames
         target_embed, _ = self.enc(x_target)
@@ -125,7 +140,36 @@ class Complicated_JEPA_Model(nn.Module):
         decoder_error = torch.mean((Y - x_raw_target)**2)
 
         return Y, l_vcr_term + prediction_error + decoder_error
-    
+
+    def forward_linear_probe(self, frames_tensor, labels):
+        x_raw_input = frames_tensor[:, :self.in_frames]
+
+        B, T_in, C, H, W = x_raw_input.shape
+        # print("x_raw_input shape:", x_raw_input.shape)
+        x_in = x_raw_input.reshape(B*T_in, C, H, W)
+
+        # Encode the input frames
+        embed, skip = self.enc(x_in)
+        _, C_, H_, W_ = embed.shape
+        # print("embed shape:", embed.shape)
+
+        # Predict the next frames
+        z = embed.view(B, T_in, C_, H_, W_)
+        hid = self.hid(z)
+        # print("hid shape:", hid.shape)
+
+        # Flatten the first 2 dims and the last 3 dimensions
+        hid = hid.reshape(B*T_in, C_*H_*W_)
+        # print("hid shape:", hid.shape)
+
+        # Linear probe
+        linear_output = self.linear_head(hid)
+        # print("linear_output shape:", linear_output.shape)
+        
+        # Compute the mse loss for the linear probe (each channel is a seperate output) 
+        loss = F.mse_loss(linear_output, labels, reduction='mean')
+        # print("loss:", loss)
+        return linear_output, loss
 
 
 # Test that the model runs
