@@ -38,6 +38,8 @@ class BaseExperiment(object):
         callbacks, self.save_dir = self._load_callbacks(args, save_dir, ckpt_dir)
         self.trainer = self._init_trainer(self.args, callbacks, strategy)
 
+        self.checkpoint_path = self.args.ckpt_path if self.args.ckpt_path else None
+
     def _init_trainer(self, args, callbacks, strategy):
         return Trainer(devices=args.gpus,  # Use these GPUs
                        max_epochs=args.epoch,  # Maximum number of epochs to train for
@@ -93,7 +95,9 @@ class BaseExperiment(object):
 
     def train(self):
         torch.set_float32_matmul_precision("allow")
-        ckpt = torch.load(osp.join(self.save_dir, 'checkpoints', 'best.ckpt'))
+        # ckpt = torch.load(osp.join(self.save_dir, 'checkpoints', 'best.ckpt'))
+        # checkpoint_path = '/content/drive/MyDrive/OpenSTL_with_JEPA/work_dirs/bouncing_shapes_complicated_JEPA_middle/checkpoints/best.ckpt'
+        ckpt = torch.load(self.checkpoint_path)
         self.method.load_state_dict(ckpt['state_dict'], strict=False)
         # self.trainer.fit(self.method, self.data, ckpt_path=self.args.ckpt_path if self.args.ckpt_path else None)
         self.trainer.fit(self.method, self.data)
