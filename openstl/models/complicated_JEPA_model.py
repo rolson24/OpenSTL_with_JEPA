@@ -161,7 +161,7 @@ class Complicated_JEPA_Model(nn.Module):
         # Predict the next frames
         z = embed.view(B, T_in, C_, H_, W_)
         hid = self.hid(z)
-        print("hid shape:", hid.shape)
+        # print("hid shape:", hid.shape)
 
         # Flatten the first 2 dims and the last 3 dimensions
         hid = hid.reshape(B*T_in, C_*H_*W_)
@@ -169,12 +169,12 @@ class Complicated_JEPA_Model(nn.Module):
 
         # Linear probe
         linear_output = self.linear_head(hid)
-        print("linear_output shape:", linear_output.shape)
-        print("labels shape:", labels.shape)
+        # print("linear_output shape:", linear_output.shape)
+        # print("labels shape:", labels.shape)
 
         # Reshape the labels
         labels = labels.reshape(B*T_in, -1)
-        print("labels shape:", labels)
+        # print("labels shape:", labels)
         
         # Compute the mse loss for the linear probe (each channel is a seperate output) 
         loss = F.mse_loss(linear_output, labels, reduction='mean')
