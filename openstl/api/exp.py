@@ -99,7 +99,7 @@ class BaseExperiment(object):
         # checkpoint_path = '/content/drive/MyDrive/OpenSTL_with_JEPA/work_dirs/bouncing_shapes_complicated_JEPA_middle/checkpoints/best.ckpt'
         ckpt = torch.load(self.checkpoint_path)
         print(f"checkpoint_path: {self.checkpoint_path}")
-        print(f"checkpoint: {ckpt}")
+        print(f"checkpoint: {ckpt.keys()}")
         self.method.load_state_dict(ckpt['state_dict'], strict=False)
         # self.trainer.fit(self.method, self.data, ckpt_path=self.args.ckpt_path if self.args.ckpt_path else None)
         self.trainer.fit(self.method, self.data)
