@@ -54,7 +54,7 @@ class Complicated_JEPA_Model(nn.Module):
 
     def __init__(self, in_shape, pre_seq_length=10, aft_seq_length=10, hid_S=16, hid_T=256, N_S=4, N_T=4,
                  mlp_ratio=8., drop=0.0, drop_path=0.0, spatio_kernel_enc=3,
-                 spatio_kernel_dec=3, act_inplace=True, alpha=0.1, beta=0.1,  **kwargs):
+                 spatio_kernel_dec=3, act_inplace=True, alpha=0.1, beta=0.1, train_linear_probe=False,  **kwargs):
         super(Complicated_JEPA_Model, self).__init__()
         T, C, H, W = in_shape  # T is pre_seq_length
         H, W = int(H / 2**(N_S/2)), int(W / 2**(N_S/2))  # downsample 1 / 2**(N_S/2)
@@ -78,8 +78,9 @@ class Complicated_JEPA_Model(nn.Module):
                 input_resolution=(H, W), model_type=model_type,
                 mlp_ratio=mlp_ratio, drop=drop, drop_path=drop_path)
         
-        # Linear probe to extract the position, velocity, rotation, and shape of the object in each frame
-        self.linear_head = nn.Linear(hid_T, 7) # 7 outputs: 3 for position (x, y, theta), 3 for velocity (dx, dy, dtheta), 1 for the object shape
+        if train_linear_probe:
+            # Linear probe to extract the position, velocity, rotation, and shape of the object in each frame
+            self.linear_head = nn.Linear(hid_T, 7) # 7 outputs: 3 for position (x, y, theta), 3 for velocity (dx, dy, dtheta), 1 for the object shape
     
     def freeze_encoder(self):
         # Freeze the encoder
