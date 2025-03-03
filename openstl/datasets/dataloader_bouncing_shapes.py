@@ -99,6 +99,7 @@ class BouncingShapesDataset(Dataset):
 
         # map the 0th label to be 'triangle'->0, 'circle'->1, 'rectangle'->2
         labels = np.array([0 if x[0] == 'triangle' else 1 if x[0] == 'circle' else 2 for x in labels])
+        print("labels: ", labels.shape)
 
         labels = torch.from_numpy(labels)
 
