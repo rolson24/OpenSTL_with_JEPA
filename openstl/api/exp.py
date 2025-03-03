@@ -13,7 +13,6 @@ from openstl.utils import (get_dataset, measure_throughput, SetupCallback, Epoch
 
 from lightning import seed_everything, Trainer
 import lightning.pytorch.callbacks as lc
-from my_strict_loading_callback import StrictFalseCheckpointCallback
 
 
 class BaseExperiment(object):
@@ -77,7 +76,6 @@ class BaseExperiment(object):
         epochend_callback = EpochEndCallback()
 
         callbacks = [setup_callback, ckpt_callback, epochend_callback]
-        callbacks.append(StrictFalseCheckpointCallback())  # add your custom callback here
         if args.sched:
             callbacks.append(lc.LearningRateMonitor(logging_interval=None))
         return callbacks, save_dir
