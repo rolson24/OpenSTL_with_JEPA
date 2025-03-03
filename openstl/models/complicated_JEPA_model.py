@@ -95,14 +95,7 @@ class Complicated_JEPA_Model(nn.Module):
         for param in self.hid.parameters():
             param.requires_grad = False
 
-    def load_checkpoint(self, checkpoint_path):
-        checkpoint = torch.load(checkpoint_path)
-        model_dict = self.state_dict()
-        # Filter out linear probe layer if not in checkpoint
-        filtered_dict = {k: v for k, v in checkpoint.items() if k in model_dict and 'linear_head' not in k}
-        model_dict.update(filtered_dict)
-        self.load_state_dict(model_dict)
-        
+
 
     def forward(self, frames_tensor, **kwargs):
         x_raw_input = frames_tensor[:, :self.in_frames]
