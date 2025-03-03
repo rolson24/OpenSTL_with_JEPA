@@ -10,13 +10,18 @@ class Bounching_Shapes_Complicated_JEPA(Base_method):
     def __init__(self, **args):
         super().__init__(**args)
         self.constraints = self._get_constraints()
-        self.train_linear_probe = args['train_linear_probe']
-
+        if 'train_linear_probe' in args:
+            self.train_linear_probe = args['train_linear_probe']
+        else:
+            self.train_linear_probe = False
 
     def _build_model(self, **args):
         print("args: ", args)
         print("hparams: ", self.hparams)
-        self.train_linear_probe = args['train_linear_probe']
+        if 'train_linear_probe' in args:
+            self.train_linear_probe = args['train_linear_probe']
+        else:
+            self.train_linear_probe = False
         # configs = args['configs']
         return Complicated_JEPA_Model(**args)
 
