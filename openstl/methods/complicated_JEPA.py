@@ -36,6 +36,7 @@ class Bounching_Shapes_Complicated_JEPA(Base_method):
 
     def load_state_dict(self, checkpoint, strict):
         # Load the state dictionary with strict=False
+        checkpoint = torch.load(checkpoint)
         self.model.load_state_dict(checkpoint['state_dict'], strict=False)
 
     def forward(self, batch_x, batch_y, **kwargs):
