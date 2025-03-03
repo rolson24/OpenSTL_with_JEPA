@@ -15,7 +15,7 @@ hid_T = 32
 N_T = 4
 N_S = 8
 # training
-lr = 1e-3
+lr = 2.5e-4
 batch_size = 32
 sched = 'onecycle'
 epoch = 200
