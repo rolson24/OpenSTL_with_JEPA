@@ -34,6 +34,10 @@ class Bounching_Shapes_Complicated_JEPA(Base_method):
                 ind +=1
         return constraints 
 
+    def on_load_checkpoint(self, checkpoint):
+        # Load the state dictionary with strict=False
+        self.model.load_state_dict(checkpoint['state_dict'], strict=False)
+
     def forward(self, batch_x, batch_y, **kwargs):
         # print("batch_x: ", batch_x.shape)
         # print("batch_y: ", batch_y.shape)

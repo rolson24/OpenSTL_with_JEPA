@@ -99,9 +99,6 @@ class Complicated_JEPA_Model(nn.Module):
         for param in self.hid.parameters():
             param.requires_grad = False
 
-    def on_load_checkpoint(self, checkpoint):
-        # Load the state dictionary with strict=False
-        self.load_state_dict(checkpoint['state_dict'], strict=False)
 
 
     def forward(self, frames_tensor, **kwargs):
