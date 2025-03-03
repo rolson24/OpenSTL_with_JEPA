@@ -160,7 +160,7 @@ class Complicated_JEPA_Model(nn.Module):
         # Predict the next frames
         z = embed.view(B, T_in, C_, H_, W_)
         hid = self.hid(z)
-        # print("hid shape:", hid.shape)
+        print("hid shape:", hid.shape)
 
         # Flatten the first 2 dims and the last 3 dimensions
         hid = hid.reshape(B*T_in, C_*H_*W_)
