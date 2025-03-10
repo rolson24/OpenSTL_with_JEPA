@@ -1,3 +1,4 @@
+# ***This is a Fork of the original OpenSTL framework. To see our code, please look in openstl/methods/complicated_JEPA.py and the JEPA modules it depends on. Our config files are in configs/bouncing_shapes/Complicated_JEPA*.py***
 <p align="center" width="100%">
   <img src='https://github-production-user-asset-6210df.s3.amazonaws.com/44519745/246222783-fdda535f-e132-4fdd-8871-2408cd29a264.png' width="50%">
 </p>
@@ -156,6 +157,7 @@ We support various spatiotemporal prediction methods and provide [benchmarks](ht
     - [x] [MMVP](https://arxiv.org/abs/2308.16154) (ICCV'2023)
     - [x] [SwinLSTM](https://arxiv.org/abs/2308.09891) (ICCV'2023)
     - [x] WaST (AAAI'2024)
+    - [X] JEPA
 
     </details>
 
@@ -191,6 +193,7 @@ We support various spatiotemporal prediction methods and provide [benchmarks](ht
     - [x] [Moving FMNIST](http://arxiv.org/abs/1502.04681) (ICML'2015) [[download](https://pan.baidu.com/s/1fudsBHyrf3nbt-7d42YWWg?pwd=kjfk)] [[config](configs/mfmnist)]
     - [x] [TaxiBJ](https://arxiv.org/abs/1610.00081) (AAAI'2017) [[download](https://github.com/TolicWang/DeepST/tree/master/data/TaxiBJ)] [[config](configs/taxibj)]
     - [x] [WeatherBench](https://arxiv.org/abs/2002.00469) (ArXiv'2020) [[download](https://github.com/pangeo-data/WeatherBench)] [[config](configs/weather)]
+    - [X] Bouncing Shapes (can be created using the tools/generate_data scripts.) 
 
     </details>
 
