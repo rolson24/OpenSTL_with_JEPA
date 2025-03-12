@@ -53,9 +53,9 @@ class Bounching_Shapes_Complicated_JEPA(Base_method):
         else:
             # Load full model weights
             if isinstance(checkpoint, dict) and 'state_dict' in checkpoint:
-                self.model.load_state_dict(checkpoint['state_dict'], strict=strict)
+                self.model.load_state_dict(checkpoint['state_dict'], strict=True)
             else:
-                self.model.load_state_dict(checkpoint, strict=strict)
+                self.model.load_state_dict(checkpoint, strict=True)
             print("Loaded full model weights")
     
     def load_pretrained_model(self, checkpoint_path, reset_linear_probes=True):
