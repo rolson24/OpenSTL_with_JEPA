@@ -39,23 +39,24 @@ class Bounching_Shapes_Complicated_JEPA(Base_method):
 
     def load_state_dict(self, checkpoint, strict=False):
         """Load state dict with support for linear probe training"""
+        if isinstance(checkpoint, dict) and 'state_dict' in checkpoint:
+            state_dict = checkpoint['state_dict']
+        else:
+            state_dict = checkpoint
+        
+        # Check if keys have 'model.' prefix and remove it
+        if any(k.startswith('model.') for k in list(state_dict.keys())[:5]):  # Check first few keys
+            state_dict = {k.replace('model.', ''): v for k, v in state_dict.items()}
+            print("Removed 'model.' prefix from state dict keys")
+            
         if self.train_linear_probe:
-            # Filter out linear probe weights if we're training them from scratch
-            if isinstance(checkpoint, dict) and 'state_dict' in checkpoint:
-                state_dict = checkpoint['state_dict']
-            else:
-                state_dict = checkpoint
-                
             # Remove linear probe related weights if they exist
-            filtered_state_dict = {k: v for k, v in state_dict.items() if 'linear_probe' not in k}
+            filtered_state_dict = {k: v for k, v in state_dict.items() if 'linear_head' not in k}
             self.model.load_state_dict(filtered_state_dict, strict=False)
             print("Loaded pre-trained model weights without linear probe layers")
         else:
             # Load full model weights
-            if isinstance(checkpoint, dict) and 'state_dict' in checkpoint:
-                self.model.load_state_dict(checkpoint['state_dict'], strict=True)
-            else:
-                self.model.load_state_dict(checkpoint, strict=True)
+            self.model.load_state_dict(state_dict, strict=strict)
             print("Loaded full model weights")
     
     def load_pretrained_model(self, checkpoint_path, reset_linear_probes=True):
