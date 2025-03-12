@@ -20,10 +20,13 @@ class Bounching_Shapes_Complicated_JEPA(Base_method):
         print("hparams: ", self.hparams)
         if 'train_linear_probe' in args:
             self.train_linear_probe = args['train_linear_probe']
+            model = Complicated_JEPA_Model(**args)
+            model.freeze_encoder()
         else:
             self.train_linear_probe = False
+            model = Complicated_JEPA_Model(**args)
         # configs = args['configs']
-        return Complicated_JEPA_Model(**args)
+        return model
 
     def _get_constraints(self):
         constraints = torch.zeros((49, 7, 7))
@@ -101,6 +104,7 @@ class Bounching_Shapes_Complicated_JEPA(Base_method):
         if self.train_linear_probe:
             pred_labels, loss = self.model.forward_linear_probe(batch_x, labels)
             self.log('train_probe_loss', loss.item(), on_step=True, on_epoch=True, prog_bar=True)
+            self.log('train_loss', loss.item(), on_step=True, on_epoch=True, prog_bar=False)
         else:
             # Concatenate the input and output tensors
             ims = torch.cat([batch_x, batch_y], dim=1).contiguous()

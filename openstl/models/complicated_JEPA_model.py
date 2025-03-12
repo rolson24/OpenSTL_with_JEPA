@@ -150,7 +150,7 @@ class Complicated_JEPA_Model(nn.Module):
         return Y, l_vcr_term + prediction_error + decoder_error
 
     def forward_linear_probe(self, frames_tensor, labels):
-        self.freeze_encoder()
+        # self.freeze_encoder()
         x_raw_input = frames_tensor[:, :self.in_frames]
         lables = labels[:, self.in_frames:self.in_frames+self.out_frames]
 
