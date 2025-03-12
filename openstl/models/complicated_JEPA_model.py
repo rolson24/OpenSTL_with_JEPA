@@ -152,7 +152,7 @@ class Complicated_JEPA_Model(nn.Module):
     def forward_linear_probe(self, frames_tensor, labels):
         # self.freeze_encoder()
         x_raw_input = frames_tensor[:, :self.in_frames]
-        lables = labels[:, self.in_frames:self.in_frames+self.out_frames]
+        labels = labels[:, self.in_frames:self.in_frames+self.out_frames]
 
         B, T_in, C, H, W = x_raw_input.shape
         # print("x_raw_input shape:", x_raw_input.shape)
