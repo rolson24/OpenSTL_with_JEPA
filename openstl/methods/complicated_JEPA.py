@@ -114,6 +114,8 @@ class Bounching_Shapes_Complicated_JEPA(Base_method):
         if self.train_linear_probe:
             pred_labels, loss = self.model.forward_linear_probe(batch_x, labels)
             self.log('val_probe_loss', loss.item(), on_step=True, on_epoch=True, prog_bar=True)
+            # Also log as val_loss for the ModelCheckpoint callback
+            self.log('val_loss', loss.item(), on_step=True, on_epoch=True, prog_bar=False)
         else:
             # Concatenate the input and output tensors
             ims = torch.cat([batch_x, batch_y], dim=1).contiguous()

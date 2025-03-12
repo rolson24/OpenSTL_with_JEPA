@@ -20,3 +20,4 @@ batch_size = 32
 sched = 'onecycle'
 epoch = 200
 train_linear_probe = True
+checkpoint_callback_params=dict(monitor='val_probe_loss')
