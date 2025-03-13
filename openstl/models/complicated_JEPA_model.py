@@ -181,6 +181,9 @@ class Complicated_JEPA_Model(nn.Module):
         # hid = hid.reshape(B*T_out, C_*H_*W_)
         hid_flat = hid.permute(0, 1, 2, 3, 4).contiguous().view(B*T_out, C_*H_*W_)
 
+        print("hid", hid[0, 0:10, 0, 0, 0])
+        print("hid_flat", hid_flat[0:10, 0])
+
         print("hid shape:", hid_flat.shape)
         print(f"labels shape: {labels_flat.shape}")
         print("labels", labels_flat[0:10])
