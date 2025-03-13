@@ -51,8 +51,8 @@ class Bounching_Shapes_Complicated_JEPA(Base_method):
             
         if self.train_linear_probe:
             # Remove linear probe related weights if they exist
-            filtered_state_dict = {k: v for k, v in state_dict.items() if 'linear_head' not in k}
-            self.model.load_state_dict(filtered_state_dict, strict=False)
+            # filtered_state_dict = {k: v for k, v in state_dict.items() if 'linear_head' not in k}
+            self.model.load_state_dict(state_dict, strict=False)
             print("Loaded pre-trained model weights without linear probe layers")
         else:
             # Load full model weights
