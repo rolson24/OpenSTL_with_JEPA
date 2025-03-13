@@ -125,7 +125,7 @@ class Complicated_JEPA_Model(nn.Module):
         # Predict the next frames
         z = embed.view(B, T_in, C_, H_, W_)
         hid = self.hid(z)
-        print("hid shape:", hid.shape)
+        # print("hid shape:", hid.shape)
 
         # Encode the target frames
         target_embed, _ = self.enc(x_target)
@@ -205,9 +205,9 @@ class Complicated_JEPA_Model(nn.Module):
         for i in range(1, 7):
             linear_head = getattr(self, f"linear_head_{i}")
             linear_output = linear_head(hid_flat)
-            if i == 4:
-                print(f"linear_output: {linear_output[0:10]}")
-                print(f"labels_flat[:, i]: {labels_flat[:, i][0:10]}")
+            # if i == 4:
+            #     print(f"linear_output: {linear_output[0:10]}")
+            #     print(f"labels_flat[:, i]: {labels_flat[:, i][0:10]}")
             linear_outputs.append(linear_output)
             loss += F.mse_loss(linear_output, labels_flat[:, i], reduction='sum')
         
