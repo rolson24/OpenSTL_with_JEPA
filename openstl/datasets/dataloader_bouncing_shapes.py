@@ -96,7 +96,7 @@ class BouncingShapesDataset(Dataset):
         input = torch.from_numpy(input / 255.0).contiguous().float()
 
         # map the 0th label to be 'triangle'->0, 'circle'->1, 'rectangle'->2
-        labels[:, 0] = np.array([0 if x == 'triangle' else 1 if x == 'circle' else 2 for x in labels[:, 0]])
+        labels[:, 0] = np.array([0 if x == 'triangle' else (1 if x == 'circle' else 2) for x in labels[:, 0]])
         # print("labels: ", labels.shape)
         # print(f"labels: {labels}")
 
