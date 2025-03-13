@@ -199,6 +199,7 @@ class Complicated_JEPA_Model(nn.Module):
         # Use cross entropy loss for classification
         # Ensure labels[:, 0] contains class indices (0, 1, or 2)
         class_labels = labels_flat[:, 0].long()  # Convert to long integers
+        print(f"class_labels: {class_labels}")
         loss += F.cross_entropy(class_logits, class_labels)
         
         # Handle regression heads (1-6) as before
