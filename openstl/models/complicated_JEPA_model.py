@@ -206,6 +206,7 @@ class Complicated_JEPA_Model(nn.Module):
             linear_head = getattr(self, f"linear_head_{i}")
             linear_output = linear_head(hid_flat)
             print(f"linear_output: {linear_output[0]}")
+            print(f"labels_flat[:, i]: {labels_flat[:, i][0]}")
             linear_outputs.append(linear_output)
             loss += F.mse_loss(linear_output, labels_flat[:, i], reduction='sum')
         
