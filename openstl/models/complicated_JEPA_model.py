@@ -205,7 +205,7 @@ class Complicated_JEPA_Model(nn.Module):
         for i in range(1, 7):
             linear_head = getattr(self, f"linear_head_{i}")
             linear_output = linear_head(hid_flat)
-            if i == 1:
+            if i == 4:
                 print(f"linear_output: {linear_output[0:10]}")
                 print(f"labels_flat[:, i]: {labels_flat[:, i][0:10]}")
             linear_outputs.append(linear_output)
