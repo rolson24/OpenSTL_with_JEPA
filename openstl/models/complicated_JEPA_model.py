@@ -181,12 +181,12 @@ class Complicated_JEPA_Model(nn.Module):
         # hid = hid.reshape(B*T_out, C_*H_*W_)
         hid_flat = hid.permute(0, 1, 2, 3, 4).contiguous().view(B*T_out, C_*H_*W_)
 
-        print("hid", hid[0, 0:10, 0, 0, 0])
-        print("hid_flat", hid_flat[0:10, 0])
+        # print("hid", hid[0, 0:10, 0, 0, 0])
+        # print("hid_flat", hid_flat[0:10, 0])
 
-        print("hid shape:", hid_flat.shape)
-        print(f"labels shape: {labels_flat.shape}")
-        print("labels", labels_flat[0:10])
+        # print("hid shape:", hid_flat.shape)
+        # print(f"labels shape: {labels_flat.shape}")
+        # print("labels", labels_flat[0:10])
 
         linear_outputs = []
         loss = 0.0
@@ -205,9 +205,11 @@ class Complicated_JEPA_Model(nn.Module):
         for i in range(1, 7):
             linear_head = getattr(self, f"linear_head_{i}")
             linear_output = linear_head(hid_flat)
+            print(f"linear_output: {linear_output[0]}")
             linear_outputs.append(linear_output)
             loss += F.mse_loss(linear_output, labels_flat[:, i], reduction='sum')
         
+        # print(f"linear_outputs: {linear_outputs}")
         # Stack outputs differently - first output has shape [B*T_out, 3], others [B*T_out, 1]
         # You might want to handle this differently depending on how you use the outputs
         return linear_outputs, loss
