@@ -83,8 +83,12 @@ class Complicated_JEPA_Model(nn.Module):
             # self.freeze_encoder()
             # Linear probe to extract the position, velocity, rotation, and shape of the object in each frame
             # One linear layer for each output
-            for i in range(num_outputs):
-                setattr(self, f"linear_head_{i}", nn.Linear(hid_S*4*4, 1))
+
+            # Class head
+            self.linear_head_0 = nn.Linear(hid_S*4*4, 3, bias=True)
+
+            for i in range(1, num_outputs):
+                setattr(self, f"linear_head_{i}", nn.Linear(hid_S*4*4, 1, bias=True))
             # self.linear_head = nn.Linear(hid_S*4*4, 7) # 7 outputs: 3 for position (x, y, theta), 3 for velocity (dx, dy, dtheta), 1 for the object shape
 
     
@@ -154,11 +158,14 @@ class Complicated_JEPA_Model(nn.Module):
         x_raw_input = frames_tensor[:, :self.in_frames]
         labels = labels[:, self.in_frames:self.in_frames+self.out_frames]
 
+        B_out, T_out, label_dim = labels.shape
+
         B, T_in, C, H, W = x_raw_input.shape
         # print("x_raw_input shape:", x_raw_input.shape)
         x_in = x_raw_input.reshape(B*T_in, C, H, W)
 
-        labels = labels.reshape(B*T_in, -1)
+        # labels = labels.reshape(B_out*T_out, label_dim)
+        labels_flat = labels.permute(0, 1, 2).contiguous().view(B_out*T_out, label_dim)
 
         # Encode the input frames
         embed, skip = self.enc(x_in)
@@ -171,29 +178,59 @@ class Complicated_JEPA_Model(nn.Module):
         # print("hid shape:", hid.shape)
 
         # Flatten the first 2 dims and the last 3 dimensions
-        hid = hid.reshape(B*T_in, C_*H_*W_)
+        # hid = hid.reshape(B*T_out, C_*H_*W_)
+        hid_flat = hid.permute(0, 1, 2, 3, 4).contiguous().view(B*T_out, C_*H_*W_)
+
         # print("hid shape:", hid.shape)
 
         linear_outputs = []
-
         loss = 0.0
-
-        # Linear probe
-        for i in range(7):
+        
+        # Handle classification head (linear_head_0)
+        linear_head_0 = self.linear_head_0
+        class_logits = linear_head_0(hid_flat)
+        linear_outputs.append(class_logits)
+        
+        # Use cross entropy loss for classification
+        # Ensure labels[:, 0] contains class indices (0, 1, or 2)
+        class_labels = labels_flat[:, 0].long()  # Convert to long integers
+        loss += F.cross_entropy(class_logits, class_labels)
+        
+        # Handle regression heads (1-6) as before
+        for i in range(1, 7):
             linear_head = getattr(self, f"linear_head_{i}")
-            
-            linear_output = linear_head(hid)
+            linear_output = linear_head(hid_flat)
             linear_outputs.append(linear_output)
-            # print("linear_output shape:", linear_output.shape)
-            # print("labels shape:", labels.shape)
-
-            # Compute the mse loss for the linear probe (each channel is a seperate output) 
-            loss += F.mse_loss(linear_output, labels[:, i], reduction='mean')
-            # print("loss:", loss)
-
-        linear_outputs = torch.stack(linear_outputs, dim=1)
-
+            loss += F.mse_loss(linear_output, labels_flat[:, i], reduction='sum')
+        
+        # Stack outputs differently - first output has shape [B*T_out, 3], others [B*T_out, 1]
+        # You might want to handle this differently depending on how you use the outputs
         return linear_outputs, loss
+    
+    def predict_classes(self, frames_tensor):
+        """Helper method to get class predictions only"""
+        x_raw_input = frames_tensor[:, :self.in_frames]
+        B, T_in, C, H, W = x_raw_input.shape
+        x_in = x_raw_input.reshape(B*T_in, C, H, W)
+        
+        # Encode and predict
+        embed, _ = self.enc(x_in)
+        _, C_, H_, W_ = embed.shape
+        z = embed.view(B, T_in, C_, H_, W_)
+        hid = self.hid(z)
+        
+        # Get output shape
+        B, T_out, C_, H_, W_ = hid.shape
+        
+        # Flatten
+        hid_flat = hid.permute(0, 1, 2, 3, 4).contiguous().view(B*T_out, C_*H_*W_)
+        
+        # Get class predictions
+        class_logits = self.linear_head_0(hid_flat)
+        class_probs = F.softmax(class_logits, dim=-1)
+        predicted_classes = torch.argmax(class_probs, dim=-1).view(B, T_out)
+        
+        return predicted_classes, class_probs.view(B, T_out, -1)
 
 
 # Test that the model runs
