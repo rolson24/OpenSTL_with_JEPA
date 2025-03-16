@@ -78,18 +78,18 @@ class Complicated_JEPA_Model(nn.Module):
                 input_resolution=(H, W), model_type=model_type,
                 mlp_ratio=mlp_ratio, drop=drop, drop_path=drop_path)
         
-        if train_linear_probe:
-            num_outputs = 7
-            # self.freeze_encoder()
-            # Linear probe to extract the position, velocity, rotation, and shape of the object in each frame
-            # One linear layer for each output
+        # if train_linear_probe:
+        num_outputs = 7
+        # self.freeze_encoder()
+        # Linear probe to extract the position, velocity, rotation, and shape of the object in each frame
+        # One linear layer for each output
 
-            # Class head
-            self.linear_head_0 = nn.Linear(hid_S*4*4, 3, bias=True)
+        # Class head
+        self.linear_head_0 = nn.Linear(hid_S*4*4, 3, bias=True)
 
-            for i in range(1, num_outputs):
-                setattr(self, f"linear_head_{i}", nn.Linear(hid_S*4*4, 1, bias=True))
-            # self.linear_head = nn.Linear(hid_S*4*4, 7) # 7 outputs: 3 for position (x, y, theta), 3 for velocity (dx, dy, dtheta), 1 for the object shape
+        for i in range(1, num_outputs):
+            setattr(self, f"linear_head_{i}", nn.Linear(hid_S*4*4, 1, bias=True))
+        # self.linear_head = nn.Linear(hid_S*4*4, 7) # 7 outputs: 3 for position (x, y, theta), 3 for velocity (dx, dy, dtheta), 1 for the object shape
 
     
     def freeze_encoder(self):
