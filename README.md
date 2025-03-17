@@ -1,4 +1,209 @@
 # ***This is a Fork of the original OpenSTL framework. To see our code, please look in openstl/methods/complicated_JEPA.py and the JEPA modules it depends on. Our config files are in configs/bouncing_shapes/Complicated_JEPA*.py***
+
+## Our Training Commands:
+
+### Pretraining
+```
+python tools/train.py -d bouncing_shapes -c configs/bouncing_shapes/ComplicatedJEPA_m.py --ex_name bouncing_shapes_simple_JEPA --data_root data
+```
+
+### Linear Probing
+```
+python tools/train.py -d bouncing_shapes -c configs/bouncing_shapes/ComplicatedJEPA_m_linear_probe.py --ex_name bouncing_shapes_complicated_JEPA_middle_linear_probe --data_root data --ckpt_path work_dirs/bouncing_shapes_complicated_JEPA_middle/checkpoints/best.ckpt
+```
+
+## Evaluation Code:
+
+```
+
+from openstl.api import BaseExperiment
+from openstl.utils import (create_parser, default_parser, get_dist_info, load_config,
+                           update_config)
+
+
+custom_model_config = {
+    'method': 'complicated_jepa',
+    'ckpt_path': '/content/drive/MyDrive/OpenSTL_with_JEPA/work_dirs/bouncing_shapes_complicated_JEPA_middle/checkpoints/best.ckpt',
+    # User Defined config file
+    'config_file': 'configs/mmnist/ComplicatedJEPA_m.py',
+    # 'train_linear_probe': True,
+
+}
+
+
+
+args = create_parser().parse_args([])
+config = args.__dict__
+
+
+# update the model config
+config_file_path = '/content/drive/MyDrive/OpenSTL_with_JEPA/configs/bouncing_shapes/ComplicatedJEPA_m.py'
+
+config.update(custom_model_config)
+loaded_cfg = load_config(config_file_path)
+print(f"loaded config: {loaded_cfg}")
+config = update_config(config, loaded_cfg,
+                        exclude_keys=['method', 'batch_size', 'val_batch_size',
+                                      'drop_path', 'warmup_epoch'])
+# fulfill with default values
+default_values = default_parser()
+for attribute in default_values.keys():
+    if config[attribute] is None:
+        config[attribute] = default_values[attribute]
+
+print(f"config: {config}")
+#
+
+config['data_root'] = '/content/drive/MyDrive/OpenSTL_with_JEPA/data'
+config['dataset'] = 'mmnist'
+print(args)
+
+exp = BaseExperiment(args, strategy='auto')
+```
+
+```
+# Show some output images
+
+import numpy as np
+from openstl.utils import show_video_line
+import torch
+
+
+checkpoint_path = '/content/drive/MyDrive/OpenSTL_with_JEPA/work_dirs/bouncing_shapes_complicated_JEPA_middle/checkpoints/best.ckpt'
+ckpt = torch.load(checkpoint_path)
+
+# Load the checkpoint
+exp.method.load_state_dict(ckpt['state_dict'], strict=False)
+model = exp.method.model.to("cuda")
+
+
+# show the given frames from an example
+data = np.load('/content/drive/MyDrive/OpenSTL_with_JEPA/data/bouncing_shapes/bouncing_shapes_test_seq.npy')
+print(f"data shape: {data.shape}")
+```
+
+```
+example_idx = 25
+pre_seq_length = 10
+aft_seq_length = 10
+
+# Get the 10 input frames
+input_frames = data[:pre_seq_length, example_idx].astype(np.float32)
+# Get the true next 10 frames
+true_out_frames = data[pre_seq_length:pre_seq_length+aft_seq_length, example_idx].astype(np.float32)
+
+# Convert to tensors
+input = torch.asarray(np.expand_dims(input_frames, axis=(0,2))).to("cuda")
+output = torch.asarray(np.expand_dims(true_out_frames, axis=(0,2))).to("cuda")
+
+# Concat the images (the model's forward expects the true images to compute the loss)
+imgs = torch.cat((input, output), dim=1)
+
+# Now run the model's forward function
+pred_out_frames_torch, loss = model(imgs)
+
+print("Plot input frames")
+# Convert to numpy
+input_frames = input.detach().squeeze(0).cpu().numpy()
+# Use OpenSTL's plot function
+show_video_line(input_frames, ncols=aft_seq_length, vmax=0.6, cbar=False, out_path=None, format='png', use_rgb=False)
+
+# Plot the 10 frames predicted by the model
+pred_out_frames_1 = pred_out_frames_torch.detach().squeeze(0).cpu().numpy()
+print(f"predicted frames")
+show_video_line(pred_out_frames_1, ncols=aft_seq_length, vmax=0.6, cbar=False, out_path=None, format='png', use_rgb=False)
+
+# Plot the 10 true frames
+print("true out frames")
+true_out_frames = output.detach().squeeze(0).cpu().numpy()
+show_video_line(true_out_frames, ncols=aft_seq_length, vmax=0.6, cbar=False, out_path=None, format='png', use_rgb=False)
+
+# 10 frames in the future (from the predicted 10 frames)
+# create a dummy output for the forward function
+output = torch.ones(1, 10, 1, 64, 64).to("cuda")
+# Concat the previously predicted frames with the dummy future frames
+imgs = torch.cat((pred_out_frames_torch, output), dim=1)
+imgs = imgs.to("cuda")
+
+# Predict the next 10 frames
+pred_out_frames_torch, loss = model(imgs)
+
+# Plot the frames
+pred_out_frames_2 = pred_out_frames_torch.detach().squeeze(0).cpu().numpy()
+print(f"next 10 frames predicted")
+show_video_line(pred_out_frames_2, ncols=aft_seq_length, vmax=0.6, cbar=False, out_path=None, format='png', use_rgb=False)
+```
+
+#### Code to plot the overlap of true frames and predicted frames
+```
+# concat pred_out_frames and true_out_frames along the channel dim
+zeros = np.ones_like(true_out_frames)
+
+combined_images = np.concatenate((pred_out_frames_1, true_out_frames, zeros), axis=1)
+print(f"combined images shape: {combined_images.shape}")
+show_video_line(combined_images, ncols=aft_seq_length, vmax=0.6, cbar=False, out_path=None, format='png', use_rgb=True)
+```
+
+#### Code to plot 90 future frames
+```
+# Choose the test sample
+example_idx = 6
+pre_seq_length = 10
+aft_seq_length = 10
+
+# Load the 100 frame sequency data
+data = np.load('/content/drive/MyDrive/OpenSTL_with_JEPA/data/bouncing_shapes/bouncing_shapes_100_frame_test.npy')
+
+# Get the first 10 frames as input
+input_frames = np.expand_dims(data[:10, example_idx].astype(np.float32), axis=1)
+
+# Predict frames in a loop using the previously predicted frames as input each time.
+predicted_frames = []
+for i in range(9):
+  start_frame = i * 10
+  end_frame = start_frame + 10
+  true_out_frames = data[end_frame:end_frame+10, example_idx].astype(np.float32)
+
+  input = torch.asarray(np.expand_dims(input_frames, axis=(0))).to("cuda")
+  output = torch.asarray(np.expand_dims(true_out_frames, axis=(0,2))).to("cuda")
+
+  imgs = torch.cat((input, output), dim=1)
+
+  latent_tensor = torch.randn(1, 20).to("cuda")
+  pred_out_frames_torch, loss = model(imgs)
+  pred_out_frames_1 = pred_out_frames_torch.detach().squeeze(0).cpu().numpy()
+
+  predicted_frames.append(pred_out_frames_1)
+
+  input_frames = pred_out_frames_1
+
+
+# Plot the initial 10 input frames
+print(f"initial input frames")
+input_frames = data[:10, example_idx].astype(np.float32)
+show_video_line(input_frames, ncols=10, vmax=0.6, cbar=False, out_path=None, format='png', use_rgb=False)
+
+# Plot the 90 predicted frames
+pred_out_frames_1 = np.concatenate(predicted_frames, axis=0)
+print(f"predicted frames shape: {pred_out_frames_1.shape}")
+print(f"predicted frames")
+show_video_line(pred_out_frames_1, ncols=90, vmax=0.6, cbar=False, out_path=None, format='png', use_rgb=False)
+
+# Plot the 90 true frames
+print("true out frames")
+true_out_frames = np.expand_dims(data[10:100, example_idx].astype(np.float32), axis=1)
+show_video_line(true_out_frames, ncols=90, vmax=0.6, cbar=False, out_path=None, format='png', use_rgb=False)
+
+# Plot the overlapped frames (red is overlap)
+# concat pred_out_frames and true_out_frames along the channel dim
+zeros = np.ones_like(true_out_frames)
+
+combined_images = np.concatenate((pred_out_frames_1, true_out_frames, zeros), axis=1)
+print(f"combined images shape: {combined_images.shape}")
+show_video_line(combined_images, ncols=90, vmax=0.6, cbar=False, out_path=None, format='png', use_rgb=True)
+
+```
+
 <p align="center" width="100%">
   <img src='https://github-production-user-asset-6210df.s3.amazonaws.com/44519745/246222783-fdda535f-e132-4fdd-8871-2408cd29a264.png' width="50%">
 </p>
